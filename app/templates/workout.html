@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ day_label }} - Gym Journal</title>
+</head>
+<body>
+    <a href="/">← Back</a>
+
+    <h1>{{ day_label }}</h1>
+    <p><strong>Today:</strong> {{ today }}</p>
+
+    <hr />
+
+    <h2>Last {{ day_label }} day</h2>
+
+    {% if last_workout %}
+      <p><strong>Date:</strong> {{ last_workout["date"] }}</p>
+
+      {% if last_sets|length == 0 %}
+        <p>No sets logged for that session.</p>
+      {% else %}
+        <table border="1" cellpadding="6">
+          <thead>
+            <tr>
+              <th>Exercise</th>
+              <th>Set #</th>
+              <th>Reps</th>
+              <th>Weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in last_sets %}
+              <tr>
+                <td>{{ row["exercise_name"] }}</td>
+                <td>{{ row["set_number"] }}</td>
+                <td>{{ row["reps"] }}</td>
+                <td>{{ row["weight"] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    {% else %}
+      <p>No previous {{ day_label }} workout found yet. No better time to start than Today!</p>
+    {% endif %}
+
+    <hr />
+
+    <h2>Log today</h2>
+    <p>Next step: we’ll add the form + save button here.</p>
+</body>
+</html>
