@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, redirect, url_for
 from datetime import date
 
 from .db import get_db
@@ -18,19 +18,14 @@ def home():
 
 @main.get("/workout/start")
 def start_workout():
-    """
-    Shows:
-        - last logs for this day type
-        - a place to start new logs for workout
-    """
-    workout_day = request.arg.get("day_type")
-    if not workout_day:
+    day_type = request.args.get("day_type")
+    if not day_type:
         return "Missing day_type", 400
-    
-    # get current day
+
     today = date.today().isoformat()
     db = get_db()
 
+    # ALWAYS define last_workout first
     last_workout = db.execute(
         """
         SELECT id, date
@@ -38,11 +33,12 @@ def start_workout():
         WHERE day_type = ?
         ORDER BY date DESC
         LIMIT 1
-        """,(last_workout,),
+        """,
+        (day_type,),
     ).fetchone()
 
     last_sets = []
-    if last_workout:
+    if last_workout is not None:
         last_sets = db.execute(
             """
             SELECT e.name AS exercise_name, s.set_number, s.reps, s.weight
@@ -53,15 +49,65 @@ def start_workout():
             """,
             (last_workout["id"],),
         ).fetchall()
-    
-    day_label = dict(DAY_TYPES).get(last_workout, last_workout)
+
+    day_label = dict(DAY_TYPES).get(day_type, day_type)
 
     return render_template(
         "workout.html",
-        day_type=workout_day,
+        day_type=day_type,
         day_label=day_label,
         today=today,
         last_workout=last_workout,
         last_sets=last_sets,
     )
 
+@main.post("/workout/save")
+def save_workout():
+    db = get_db()
+
+    workout_type = request.form.get("day_type")
+    workout_date = request.form.get("date") or date.today().isoformat()
+
+    if not workout_type:
+        return "Missing workout_type", 400
+    
+    cur = db.execute(
+        "INSERT INTO workouts (date, day_type) VALUES (?, ?)",
+        (workout_date, workout_type),
+    )
+    workout_id = cur.lastrowid
+
+    exercise_names = request.form.getlist("exercise_name")
+    set_numbers = request.form.getlist("set_number")
+    reps_list = request.form.getlist("reps")
+    weights = request.form.getlist("weight")
+
+    if not (len(exercise_names) == len(set_numbers) == len(reps_list) == len(weights)):
+        return "Form data mismatch", 400
+    
+    for ex_name, set_no, reps, weight in zip(exercise_names, set_numbers, reps_list, weights):
+        ex_name = (ex_name or "").strip()
+        if not ex_name:
+            continue  # skip empty rows
+
+        # Upsert exercise by name
+        row = db.execute("SELECT id FROM exercises WHERE name = ?", (ex_name,)).fetchone()
+        if row:
+            exercise_id = row["id"]
+        else:
+            ex_cur = db.execute("INSERT INTO exercises (name) VALUES (?)", (ex_name,))
+            exercise_id = ex_cur.lastrowid
+
+        # Insert set
+        db.execute(
+            """
+            INSERT INTO sets (workout_id, exercise_id, set_number, reps, weight)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (workout_id, exercise_id, int(set_no), int(reps), float(weight)),
+        )
+
+    db.commit()
+
+    # Redirect back to start page so it becomes “Last time”
+    return redirect(url_for("main.start_workout", day_type=workout_type))

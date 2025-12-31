@@ -26,8 +26,8 @@
             <tr>
               <th>Exercise</th>
               <th>Set #</th>
+            <th>Weight</th>
               <th>Reps</th>
-              <th>Weight</th>
             </tr>
           </thead>
           <tbody>
@@ -35,8 +35,8 @@
               <tr>
                 <td>{{ row["exercise_name"] }}</td>
                 <td>{{ row["set_number"] }}</td>
-                <td>{{ row["reps"] }}</td>
                 <td>{{ row["weight"] }}</td>
+                <td>{{ row["reps"] }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -49,6 +49,38 @@
     <hr />
 
     <h2>Log today</h2>
-    <p>Next step: we’ll add the form + save button here.</p>
+
+<form method="post" action="/workout/save">
+  <input type="hidden" name="day_type" value="{{ day_type }}" />
+  <input type="hidden" name="date" value="{{ today }}" />
+
+  <p>Add rows for each set you do.</p>
+
+  <table border="1" cellpadding="6">
+    <thead>
+      <tr>
+        <th>Exercise</th>
+        <th>Set #</th>
+        <th>Weight</th>
+        <th>Reps</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Start with 5 blank rows (we’ll make this smarter later) -->
+      {% for i in range(1, 6) %}
+      <tr>
+        <td><input name="exercise_name" placeholder="e.g. Squat" /></td>
+        <td><input name="set_number" type="number" value="{{ i }}" min="1" /></td>
+        <td><input name="weight" type="number" step="0.5" min="0" /></td>
+        <td><input name="reps" type="number" min="1" /></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin-top: 12px;">
+    <button type="submit">Save Workout</button>
+  </p>
+</form>
 </body>
 </html>
