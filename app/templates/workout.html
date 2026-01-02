@@ -71,7 +71,7 @@
       <tr>
         <td><input name="exercise_name" placeholder="e.g. Squat" /></td>
         <td><input name="set_number" type="number" value="{{ i }}" min="1" /></td>
-        <td><input name="weight" type="number" step="0.5" min="0" /></td>
+        <td><input name="weight" type="number" step="any" min="0" /></td>
         <td><input name="reps" type="number" min="1" /></td>
       </tr>
       {% endfor %}
@@ -110,7 +110,7 @@
         <td><input name="exercise_name" placeholder="e.g. Squat" value="${exName}"/></td>
         <td><input name="set_number" type="number" min="1" value="${setNo}"/></td>
         <td><input name="reps" type="number" min="1" value="${reps}"/></td>
-        <td><input name="weight" type="number" step="0.5" min="0" value="${weight}"/></td>
+        <td><input name="weight" type="number" step="any" min="0" value="${weight}"/></td>
       `;
       tbody.appendChild(tr);
     }
