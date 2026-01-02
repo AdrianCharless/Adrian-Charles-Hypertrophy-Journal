@@ -65,7 +65,7 @@
         <th>Reps</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="today-sets-body">
       <!-- Start with 5 blank rows (we’ll make this smarter later) -->
       {% for i in range(1, 6) %}
       <tr>
@@ -79,8 +79,44 @@
   </table>
 
   <p style="margin-top: 12px;">
+    <button type="button" id="add-set-btn">+ Add Set</button>
     <button type="submit">Save Workout</button>
-  </p>
+</p>
 </form>
+<script>
+  (function () {
+    const tbody = document.getElementById("today-sets-body");
+    const addBtn = document.getElementById("add-set-btn");
+
+    function nextSetNumber() {
+      // Find max set_number currently in the table and add 1
+      const inputs = tbody.querySelectorAll('input[name="set_number"]');
+      let max = 0;
+      inputs.forEach((inp) => {
+        const val = parseInt(inp.value, 10);
+        if (!isNaN(val) && val > max) max = val;
+      });
+      return max + 1;
+    }
+
+    function addRow(prefill = {}) {
+      const setNo = prefill.set_number ?? nextSetNumber();
+      const exName = prefill.exercise_name ?? "";
+      const reps = prefill.reps ?? "";
+      const weight = prefill.weight ?? "";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input name="exercise_name" placeholder="e.g. Squat" value="${exName}"/></td>
+        <td><input name="set_number" type="number" min="1" value="${setNo}"/></td>
+        <td><input name="reps" type="number" min="1" value="${reps}"/></td>
+        <td><input name="weight" type="number" step="0.5" min="0" value="${weight}"/></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    addBtn.addEventListener("click", () => addRow());
+  })();
+</script>
 </body>
 </html>
