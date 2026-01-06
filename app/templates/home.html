@@ -16,5 +16,11 @@
         </li>
       {% endfor %}
     </ul>
+    <h2>History</h2>
+<ul>
+  {% for value, label in day_types %}
+    <li><a href="/history/{{ value }}">View {{ label }} days</a></li>
+  {% endfor %}
+</ul>
 </body>
 </html>

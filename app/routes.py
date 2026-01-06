@@ -61,6 +61,61 @@ def start_workout():
         last_sets=last_sets,
     )
 
+@main.get("/history/<workout_type>")
+def history_day(workout_type):
+    db = get_db()
+
+    workouts = db.execute(
+        """
+        SELECT id, date
+        FROM workouts
+        WHERE day_type = ?
+        ORDER BY date DESC
+        """,
+        (workout_type,),
+    ).fetchall()
+
+    day_label = dict(DAY_TYPES).get(workout_type, workout_type)
+
+    return render_template(
+        "history_day.html",
+        day_type=workout_type,
+        day_label=day_label,
+        workouts=workouts,
+    )
+
+@main.get("/workout/<int:workout_id>")
+def workout_detail(workout_id: int):
+    db = get_db()
+
+    workout = db.execute(
+        "SELECT id, date, day_type FROM workouts WHERE id = ?",
+        (workout_id,),
+    ).fetchone()
+
+    if workout is None:
+        return "Workout not found", 404
+    
+    sets_rows = db.execute(
+        """
+        SELECT e.name AS exercise_name, s.set_number, s.reps, s.weight
+        FROM sets s
+        JOIN exercises e ON e.id = s.exercise_id
+        WHERE s.workout_id = ?
+        ORDER BY e.name, s.set_number
+        """,
+        (workout_id,),
+    ).fetchall()
+
+    day_label = dict(DAY_TYPES).get(workout["day_type"], workout["day_type"])
+
+    return render_template(
+        "workout_detail.html",
+        workout=workout,
+        day_label=day_label,
+        sets=sets_rows,
+    )
+
 @main.post("/workout/save")
 def save_workout():
     db = get_db()

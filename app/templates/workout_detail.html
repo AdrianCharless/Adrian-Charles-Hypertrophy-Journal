@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ day_label }} - {{ workout["date"] }}</title>
+</head>
+<body>
+    <a href="/history/{{ workout['day_type'] }}">← Back to History</a>
+    <h1>{{ day_label }}</h1>
+    <p><strong>Date:</strong> {{ workout["date"] }}</p>
+
+    {% if sets|length == 0 %}
+      <p>No sets logged for this workout.</p>
+    {% else %}
+      <table border="1" cellpadding="6">
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th>Set #</th>
+            <th>Reps</th>
+            <th>Weight</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in sets %}
+            <tr>
+              <td>{{ row["exercise_name"] }}</td>
+              <td>{{ row["set_number"] }}</td>
+              <td>{{ row["reps"] }}</td>
+              <td>{{ row["weight"] }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+</body>
+</html>
