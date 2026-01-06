@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 from datetime import date
 
 from .db import get_db
@@ -115,6 +115,60 @@ def workout_detail(workout_id: int):
         day_label=day_label,
         sets=sets_rows,
     )
+
+@main.get("/progress")
+def progress():
+    db = get_db()
+    exercises = db.execute("SELECT id, name FROM exercises ORDER BY name").fetchall()
+    return render_template("progress.html", day_types=DAY_TYPES, exercises=exercises)
+
+@main.get("/api/progress")
+def progress_api():
+    """
+    Query params:
+      - day_type=LEG_DAY (optional)
+      - exercise_id=123 (required)
+      - metric=top_weight or e1rm (optional, default top_weight)
+    """
+    db = get_db()
+    day_type = request.args.get("day_type")  # optional
+    exercise_id = request.args.get("exercise_id")
+    metric = request.args.get("metric", "top_weight")
+
+    if not exercise_id:
+        return jsonify({"error": "Missing exercise_id"}), 400
+
+    params = [int(exercise_id)]
+    day_filter_sql = ""
+    if day_type:
+        day_filter_sql = " AND w.day_type = ? "
+        params.append(day_type)
+
+    # Base rows per workout date: compute max weight, and also max estimated 1RM for that day
+    rows = db.execute(
+        f"""
+        SELECT
+            w.date AS date,
+            MAX(s.weight) AS top_weight,
+            MAX(s.weight * (1.0 + (s.reps / 30.0))) AS e1rm
+        FROM sets s
+        JOIN workouts w ON w.id = s.workout_id
+        WHERE s.exercise_id = ?
+        {day_filter_sql}
+        GROUP BY w.id
+        ORDER BY w.date
+        """,
+        tuple(params),
+    ).fetchall()
+
+    key = "top_weight" if metric == "top_weight" else "e1rm"
+
+    return jsonify({
+        "dates": [r["date"] for r in rows],
+        "values": [r[key] for r in rows],
+        "metric": key,
+    })
+
 
 @main.post("/workout/save")
 def save_workout():
