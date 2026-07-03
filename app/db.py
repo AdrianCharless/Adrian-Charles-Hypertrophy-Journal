@@ -15,7 +15,7 @@ def get_db() -> sqlite3.Connection:
 
     return g.db
 
-def close_db(e=None) -> None:
+def close_db(_e=None) -> None:
     db = g.pop("db", None)
     if db is not None:
         db.close()
@@ -24,12 +24,32 @@ def init_db() -> None:
     db = get_db()
 
     db.execute("""
-        CREATE TABLE IF NOT EXISTS workouts (
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date TEXT NOT NULL,              -- ISO date string: YYYY-MM-DD
-            day_type TEXT NOT NULL           -- e.g. LEG_DAY, CHEST_TRICEP
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL
         );
     """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS split_days (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
+    """)
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS workouts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            day_type TEXT NOT NULL
+        );
+    """)
+    for col_def in ("user_id INTEGER", "split_day_id INTEGER"):
+        try:
+            db.execute(f"ALTER TABLE workouts ADD COLUMN {col_def}")
+        except Exception:
+            pass  # column already exists
     db.execute("""
             CREATE TABLE IF NOT EXISTS exercises (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

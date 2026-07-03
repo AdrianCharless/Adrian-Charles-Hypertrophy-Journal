@@ -1,101 +1,187 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, session
 from datetime import date
+from itertools import groupby as _groupby
 
 from .db import get_db
+from .auth import login_required
 
 main = Blueprint("main", __name__)
 
-DAY_TYPES = [
-    ("CHEST_TRICEP", "Chest & Tricep"),
-    ("BACK_BICEP", "Back & Bicep"),
-    ("SHOULDERS_ABS", "Shoulders & Abs"),
-    ("LEG_DAY", "Leg Day"),
-]
+
+def get_user_splits():
+    return get_db().execute(
+        "SELECT id, name FROM split_days WHERE user_id = ? ORDER BY id",
+        (session["user_id"],),
+    ).fetchall()
+
 
 @main.get("/")
+@login_required
 def home():
-    return render_template("home.html", day_types=DAY_TYPES)
+    return render_template("home.html", splits=get_user_splits())
+
+
+@main.post("/split/add")
+@login_required
+def split_add():
+    name = (request.form.get("name") or "").strip()
+    if name:
+        get_db().execute(
+            "INSERT INTO split_days (user_id, name) VALUES (?, ?)",
+            (session["user_id"], name),
+        )
+        get_db().commit()
+    return redirect(url_for("main.home"))
+
 
 @main.get("/workout/start")
+@login_required
 def start_workout():
-    day_type = request.args.get("day_type")
-    if not day_type:
-        return "Missing day_type", 400
+    split_id = request.args.get("split_id", type=int)
+    if not split_id:
+        return "Missing split_id", 400
+
+    db = get_db()
+    split = db.execute(
+        "SELECT id, name FROM split_days WHERE id = ? AND user_id = ?",
+        (split_id, session["user_id"]),
+    ).fetchone()
+    if split is None:
+        return "Not found", 404
 
     today = date.today().isoformat()
-    db = get_db()
 
-    # ALWAYS define last_workout first
-    last_workout = db.execute(
+    # Last 5 sets per exercise across all sessions for this split,
+    # ordered so the most-recently-done exercises appear first.
+    raw_rows = db.execute(
         """
-        SELECT id, date
-        FROM workouts
-        WHERE day_type = ?
-        ORDER BY date DESC
-        LIMIT 1
-        """,
-        (day_type,),
-    ).fetchone()
-
-    last_sets = []
-    if last_workout is not None:
-        last_sets = db.execute(
-            """
-            SELECT e.name AS exercise_name, s.set_number, s.reps, s.weight
+        SELECT exercise_name, weight, reps, set_number, date
+        FROM (
+            SELECT
+                e.name  AS exercise_name,
+                s.weight,
+                s.reps,
+                s.set_number,
+                w.date,
+                ROW_NUMBER() OVER (
+                    PARTITION BY s.exercise_id
+                    ORDER BY w.date DESC, s.set_number DESC
+                ) AS rn,
+                MAX(w.date) OVER (PARTITION BY s.exercise_id) AS last_date
             FROM sets s
             JOIN exercises e ON e.id = s.exercise_id
-            WHERE s.workout_id = ?
-            ORDER BY e.name, s.set_number
-            """,
-            (last_workout["id"],),
-        ).fetchall()
+            JOIN workouts w  ON w.id = s.workout_id
+            WHERE w.split_day_id = ? AND w.user_id = ?
+        )
+        WHERE rn <= 5
+        ORDER BY last_date DESC, exercise_name, date DESC, set_number
+        """,
+        (split_id, session["user_id"]),
+    ).fetchall()
 
-    day_label = dict(DAY_TYPES).get(day_type, day_type)
+    exercise_history = [
+        (ex_name, list(rows))
+        for ex_name, rows in _groupby(raw_rows, key=lambda r: r["exercise_name"])
+    ]
 
     return render_template(
         "workout.html",
-        day_type=day_type,
-        day_label=day_label,
+        split=split,
         today=today,
-        last_workout=last_workout,
-        last_sets=last_sets,
+        exercise_history=exercise_history,
     )
 
-@main.get("/history/<workout_type>")
-def history_day(workout_type):
+
+@main.post("/workout/save")
+@login_required
+def save_workout():
     db = get_db()
 
+    split_id = request.form.get("split_id", type=int)
+    workout_date = request.form.get("date") or date.today().isoformat()
+
+    if not split_id:
+        return "Missing split_id", 400
+
+    split = db.execute(
+        "SELECT id, name FROM split_days WHERE id = ? AND user_id = ?",
+        (split_id, session["user_id"]),
+    ).fetchone()
+    if split is None:
+        return "Not found", 404
+
+    cur = db.execute(
+        "INSERT INTO workouts (date, day_type, user_id, split_day_id) VALUES (?, ?, ?, ?)",
+        (workout_date, split["name"], session["user_id"], split_id),
+    )
+    workout_id = cur.lastrowid
+
+    exercise_names = request.form.getlist("exercise_name")
+    set_numbers    = request.form.getlist("set_number")
+    reps_list      = request.form.getlist("reps")
+    weights        = request.form.getlist("weight")
+
+    if not (len(exercise_names) == len(set_numbers) == len(reps_list) == len(weights)):
+        return "Form data mismatch", 400
+
+    for ex_name, set_no, reps, weight in zip(exercise_names, set_numbers, reps_list, weights):
+        ex_name = (ex_name or "").strip()
+        if not ex_name:
+            continue
+
+        row = db.execute("SELECT id FROM exercises WHERE name = ?", (ex_name,)).fetchone()
+        if row:
+            exercise_id = row["id"]
+        else:
+            ex_cur = db.execute("INSERT INTO exercises (name) VALUES (?)", (ex_name,))
+            exercise_id = ex_cur.lastrowid
+
+        db.execute(
+            "INSERT INTO sets (workout_id, exercise_id, set_number, reps, weight) VALUES (?, ?, ?, ?, ?)",
+            (workout_id, exercise_id, int(set_no), int(reps), float(weight)),
+        )
+
+    db.commit()
+    return redirect(url_for("main.start_workout", split_id=split_id))
+
+
+@main.get("/history/<int:split_id>")
+@login_required
+def history_day(split_id: int):
+    db = get_db()
+
+    split = db.execute(
+        "SELECT id, name FROM split_days WHERE id = ? AND user_id = ?",
+        (split_id, session["user_id"]),
+    ).fetchone()
+    if split is None:
+        return "Not found", 404
+
     workouts = db.execute(
-        """
-        SELECT id, date
-        FROM workouts
-        WHERE day_type = ?
-        ORDER BY date DESC
-        """,
-        (workout_type,),
+        "SELECT id, date FROM workouts WHERE split_day_id = ? AND user_id = ? ORDER BY date DESC",
+        (split_id, session["user_id"]),
     ).fetchall()
 
-    day_label = dict(DAY_TYPES).get(workout_type, workout_type)
+    return render_template("history_day.html", split=split, workouts=workouts)
 
-    return render_template(
-        "history_day.html",
-        day_type=workout_type,
-        day_label=day_label,
-        workouts=workouts,
-    )
 
 @main.get("/workout/<int:workout_id>")
+@login_required
 def workout_detail(workout_id: int):
     db = get_db()
 
     workout = db.execute(
-        "SELECT id, date, day_type FROM workouts WHERE id = ?",
-        (workout_id,),
+        "SELECT id, date, day_type, split_day_id FROM workouts WHERE id = ? AND user_id = ?",
+        (workout_id, session["user_id"]),
+    ).fetchone()
+    if workout is None:
+        return "Not found", 404
+
+    split = db.execute(
+        "SELECT id, name FROM split_days WHERE id = ?",
+        (workout["split_day_id"],),
     ).fetchone()
 
-    if workout is None:
-        return "Workout not found", 404
-    
     sets_rows = db.execute(
         """
         SELECT e.name AS exercise_name, s.set_number, s.reps, s.weight
@@ -107,44 +193,50 @@ def workout_detail(workout_id: int):
         (workout_id,),
     ).fetchall()
 
-    day_label = dict(DAY_TYPES).get(workout["day_type"], workout["day_type"])
-
     return render_template(
         "workout_detail.html",
         workout=workout,
-        day_label=day_label,
+        split=split,
         sets=sets_rows,
     )
 
+
 @main.get("/progress")
+@login_required
 def progress():
     db = get_db()
-    exercises = db.execute("SELECT id, name FROM exercises ORDER BY name").fetchall()
-    return render_template("progress.html", day_types=DAY_TYPES, exercises=exercises)
+    splits = get_user_splits()
+    exercises = db.execute(
+        """
+        SELECT DISTINCT e.id, e.name
+        FROM exercises e
+        JOIN sets s ON s.exercise_id = e.id
+        JOIN workouts w ON w.id = s.workout_id
+        WHERE w.user_id = ?
+        ORDER BY e.name
+        """,
+        (session["user_id"],),
+    ).fetchall()
+    return render_template("progress.html", splits=splits, exercises=exercises)
+
 
 @main.get("/api/progress")
+@login_required
 def progress_api():
-    """
-    Query params:
-      - day_type=LEG_DAY (optional)
-      - exercise_id=123 (required)
-      - metric=top_weight or e1rm (optional, default top_weight)
-    """
     db = get_db()
-    day_type = request.args.get("day_type")  # optional
+    split_id   = request.args.get("split_id", type=int)
     exercise_id = request.args.get("exercise_id")
-    metric = request.args.get("metric", "top_weight")
+    metric      = request.args.get("metric", "top_weight")
 
     if not exercise_id:
         return jsonify({"error": "Missing exercise_id"}), 400
 
-    params = [int(exercise_id)]
-    day_filter_sql = ""
-    if day_type:
-        day_filter_sql = " AND w.day_type = ? "
-        params.append(day_type)
+    params = [int(exercise_id), session["user_id"]]
+    split_filter = ""
+    if split_id:
+        split_filter = " AND w.split_day_id = ? "
+        params.append(split_id)
 
-    # Base rows per workout date: compute max weight, and also max estimated 1RM for that day
     rows = db.execute(
         f"""
         SELECT
@@ -153,8 +245,8 @@ def progress_api():
             MAX(s.weight * (1.0 + (s.reps / 30.0))) AS e1rm
         FROM sets s
         JOIN workouts w ON w.id = s.workout_id
-        WHERE s.exercise_id = ?
-        {day_filter_sql}
+        WHERE s.exercise_id = ? AND w.user_id = ?
+        {split_filter}
         GROUP BY w.id
         ORDER BY w.date
         """,
@@ -162,61 +254,8 @@ def progress_api():
     ).fetchall()
 
     key = "top_weight" if metric == "top_weight" else "e1rm"
-
     return jsonify({
-        "dates": [r["date"] for r in rows],
+        "dates":  [r["date"] for r in rows],
         "values": [r[key] for r in rows],
         "metric": key,
     })
-
-
-@main.post("/workout/save")
-def save_workout():
-    db = get_db()
-
-    workout_type = request.form.get("day_type")
-    workout_date = request.form.get("date") or date.today().isoformat()
-
-    if not workout_type:
-        return "Missing workout_type", 400
-    
-    cur = db.execute(
-        "INSERT INTO workouts (date, day_type) VALUES (?, ?)",
-        (workout_date, workout_type),
-    )
-    workout_id = cur.lastrowid
-
-    exercise_names = request.form.getlist("exercise_name")
-    set_numbers = request.form.getlist("set_number")
-    reps_list = request.form.getlist("reps")
-    weights = request.form.getlist("weight")
-
-    if not (len(exercise_names) == len(set_numbers) == len(reps_list) == len(weights)):
-        return "Form data mismatch", 400
-    
-    for ex_name, set_no, reps, weight in zip(exercise_names, set_numbers, reps_list, weights):
-        ex_name = (ex_name or "").strip()
-        if not ex_name:
-            continue  # skip empty rows
-
-        # Upsert exercise by name
-        row = db.execute("SELECT id FROM exercises WHERE name = ?", (ex_name,)).fetchone()
-        if row:
-            exercise_id = row["id"]
-        else:
-            ex_cur = db.execute("INSERT INTO exercises (name) VALUES (?)", (ex_name,))
-            exercise_id = ex_cur.lastrowid
-
-        # Insert set
-        db.execute(
-            """
-            INSERT INTO sets (workout_id, exercise_id, set_number, reps, weight)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            (workout_id, exercise_id, int(set_no), int(reps), float(weight)),
-        )
-
-    db.commit()
-
-    # Redirect back to start page so it becomes “Last time”
-    return redirect(url_for("main.start_workout", day_type=workout_type))

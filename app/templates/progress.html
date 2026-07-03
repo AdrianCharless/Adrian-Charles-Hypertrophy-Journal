@@ -5,12 +5,7 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  .filter-row {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-  }
+  .filter-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; }
   .filter-group { display: flex; flex-direction: column; min-width: 160px; }
 </style>
 {% endblock %}
@@ -26,11 +21,11 @@
 <div class="card">
   <div class="filter-row">
     <div class="filter-group">
-      <label for="dayType">Day Type</label>
-      <select id="dayType">
+      <label for="splitId">Split Day</label>
+      <select id="splitId">
         <option value="">All</option>
-        {% for value, label in day_types %}
-          <option value="{{ value }}">{{ label }}</option>
+        {% for split in splits %}
+          <option value="{{ split['id'] }}">{{ split['name'] }}</option>
         {% endfor %}
       </select>
     </div>
@@ -62,17 +57,15 @@
 </div>
 
 <script>
-  const dayTypeEl  = document.getElementById("dayType");
+  const splitEl    = document.getElementById("splitId");
   const exerciseEl = document.getElementById("exercise");
   const metricEl   = document.getElementById("metric");
   const hintEl     = document.getElementById("hint");
 
-  const ctx = document.getElementById("chart").getContext("2d");
-
   Chart.defaults.color = "#7a7f93";
   Chart.defaults.borderColor = "#2a2d36";
 
-  const chart = new Chart(ctx, {
+  const chart = new Chart(document.getElementById("chart").getContext("2d"), {
     type: "line",
     data: {
       labels: [],
@@ -90,7 +83,6 @@
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -102,21 +94,15 @@
         }
       },
       scales: {
-        x: {
-          grid: { color: "#1e2028" },
-          ticks: { maxRotation: 30 }
-        },
-        y: {
-          beginAtZero: false,
-          grid: { color: "#1e2028" },
-        }
+        x: { grid: { color: "#1e2028" }, ticks: { maxRotation: 30 } },
+        y: { beginAtZero: false, grid: { color: "#1e2028" } }
       }
     }
   });
 
   async function refreshChart() {
     const exerciseId = exerciseEl.value;
-    const dayType    = dayTypeEl.value;
+    const splitId    = splitEl.value;
     const metric     = metricEl.value;
 
     if (!exerciseId) {
@@ -130,7 +116,7 @@
     const qs = new URLSearchParams();
     qs.set("exercise_id", exerciseId);
     qs.set("metric", metric);
-    if (dayType) qs.set("day_type", dayType);
+    if (splitId) qs.set("split_id", splitId);
 
     const res  = await fetch(`/api/progress?${qs.toString()}`);
     const data = await res.json();
@@ -147,7 +133,7 @@
       : "No data yet for that selection.";
   }
 
-  dayTypeEl.addEventListener("change", refreshChart);
+  splitEl.addEventListener("change", refreshChart);
   exerciseEl.addEventListener("change", refreshChart);
   metricEl.addEventListener("change", refreshChart);
 

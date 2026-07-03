@@ -1,55 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}{{ day_label }} — Hypertrophy Journal{% endblock %}
+{% block title %}{{ split['name'] }} — Hypertrophy Journal{% endblock %}
 
 {% block content %}
 <a href="/" class="back-link">← Back</a>
 
 <div class="section-header">
-  <h1>{{ day_label }}</h1>
+  <h1>{{ split['name'] }}</h1>
   <p class="meta"><strong>Today:</strong> {{ today }}</p>
 </div>
 
-<!-- Previous session -->
+<!-- Previous sets per exercise -->
 <div class="card">
-  <div class="badge">Last Session</div>
-  {% if last_workout %}
-    <p class="meta"><strong>Date:</strong> {{ last_workout["date"] }}</p>
-    {% if last_sets|length == 0 %}
-      <p class="hint">No sets logged for that session.</p>
-    {% else %}
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Exercise</th>
-            <th>Set</th>
-            <th>Weight</th>
-            <th>Reps</th>
-          </tr>
-        </thead>
+  <div class="badge">Previous Sets</div>
+  {% if exercise_history %}
+    {% for ex_name, sets in exercise_history %}
+    <div class="exercise-block">
+      <div class="exercise-label">{{ ex_name }}</div>
+      <table class="sets-mini">
         <tbody>
-          {% for row in last_sets %}
-            <tr>
-              <td>{{ row["exercise_name"] }}</td>
-              <td>{{ row["set_number"] }}</td>
-              <td>{{ row["weight"] }}</td>
-              <td>{{ row["reps"] }}</td>
-            </tr>
+          {% for s in sets %}
+          <tr>
+            <td class="date-col">{{ s['date'] }}</td>
+            <td class="val">{{ s['weight'] }} lbs</td>
+            <td class="val">× {{ s['reps'] }} reps</td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
-    {% endif %}
+    </div>
+    {% endfor %}
   {% else %}
-    <p class="hint">No previous {{ day_label }} workout found yet. No better time to start than today!</p>
+    <p class="hint">No previous sets for this split yet. Log your first session below!</p>
   {% endif %}
 </div>
 
 <!-- Log today -->
 <div class="card" style="margin-top:20px;">
-  <div class="badge" style="background:rgba(249,115,22,0.15);color:var(--accent);">Log Today</div>
+  <div class="badge">Log Today</div>
 
   <form method="post" action="/workout/save">
-    <input type="hidden" name="day_type" value="{{ day_type }}" />
+    <input type="hidden" name="split_id" value="{{ split['id'] }}" />
     <input type="hidden" name="date" value="{{ today }}" />
 
     <div style="overflow-x:auto;">
@@ -67,7 +58,7 @@
           <tr>
             <td><input name="exercise_name" placeholder="e.g. Squat" /></td>
             <td><input name="set_number" type="number" value="{{ i }}" min="1" /></td>
-            <td><input name="weight" type="number" step="any" min="0" placeholder="kg" /></td>
+            <td><input name="weight" type="number" step="any" min="0" placeholder="lbs" /></td>
             <td><input name="reps" type="number" min="1" /></td>
           </tr>
           {% endfor %}
@@ -97,23 +88,17 @@
       return max + 1;
     }
 
-    function addRow(prefill = {}) {
-      const setNo = prefill.set_number ?? nextSetNumber();
-      const exName = prefill.exercise_name ?? "";
-      const reps = prefill.reps ?? "";
-      const weight = prefill.weight ?? "";
-
+    addBtn.addEventListener("click", () => {
+      const setNo = nextSetNumber();
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><input name="exercise_name" placeholder="e.g. Squat" value="${exName}"/></td>
-        <td><input name="set_number" type="number" min="1" value="${setNo}"/></td>
-        <td><input name="weight" type="number" step="any" min="0" placeholder="kg" value="${weight}"/></td>
-        <td><input name="reps" type="number" min="1" value="${reps}"/></td>
+        <td><input name="exercise_name" placeholder="e.g. Squat" /></td>
+        <td><input name="set_number" type="number" min="1" value="${setNo}" /></td>
+        <td><input name="weight" type="number" step="any" min="0" placeholder="lbs" /></td>
+        <td><input name="reps" type="number" min="1" /></td>
       `;
       tbody.appendChild(tr);
-    }
-
-    addBtn.addEventListener("click", () => addRow());
+    });
   })();
 </script>
 {% endblock %}

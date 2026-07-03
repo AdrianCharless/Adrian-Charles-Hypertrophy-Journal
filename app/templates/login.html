@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Log In — Hypertrophy Journal{% endblock %}
+
+{% block content %}
+<div class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="auth-sub">Log in to your journal</p>
+
+  <form method="post" action="/login">
+    <div class="field">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" autofocus required />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+    </div>
+    <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Log In</button>
+  </form>
+
+  <p class="auth-footer">
+    Don't have an account? <a href="/register">Create one</a>
+  </p>
+
+  <div style="margin-top:24px; padding:14px 16px; background:rgba(249,115,22,0.08); border:1px solid rgba(249,115,22,0.2); border-radius:8px; font-size:13px; color:var(--muted); text-align:center;">
+    <strong style="color:var(--text);">Demo account</strong><br />
+    username: <code style="color:var(--accent);">demo</code> &nbsp;·&nbsp; password: <code style="color:var(--accent);">demo1234</code>
+  </div>
+</div>
+{% endblock %}

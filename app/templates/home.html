@@ -8,31 +8,48 @@
   <p class="meta">Select a day to start logging your session.</p>
 </div>
 
+<!-- Start Workout -->
 <div class="card">
   <div class="badge">Start Workout</div>
-  <div class="day-grid">
-    {% for value, label in day_types %}
-      <a href="/workout/start?day_type={{ value }}" class="day-card">
-        <span class="day-label">{{ label }}</span>
-        <span class="day-sub">Start session →</span>
-      </a>
-    {% endfor %}
-  </div>
+  {% if splits %}
+    <div class="day-grid">
+      {% for split in splits %}
+        <a href="/workout/start?split_id={{ split['id'] }}" class="day-card">
+          <span class="day-label">{{ split['name'] }}</span>
+          <span class="day-sub">Start session →</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="hint">No split days yet. Add one below to get started.</p>
+  {% endif %}
+
+  <hr class="divider" />
+
+  <form method="post" action="/split/add" style="display:flex; gap:10px; align-items:center;">
+    <input name="name" placeholder="e.g. Push Day" style="flex:1; background:var(--bg); border:1px solid var(--border); border-radius:7px; padding:9px 12px; color:var(--text); font-size:14px; outline:none;" />
+    <button type="submit" class="btn btn-ghost">+ Add Split Day</button>
+  </form>
 </div>
 
+<!-- History -->
 <div class="card" style="margin-top:20px;">
   <div class="badge" style="background:rgba(34,197,94,0.12);color:var(--green);">History</div>
-  <div class="day-grid">
-    {% for value, label in day_types %}
-      <a href="/history/{{ value }}" class="day-card">
-        <span class="day-label">{{ label }}</span>
-        <span class="day-sub">View history →</span>
-      </a>
-    {% endfor %}
-  </div>
+  {% if splits %}
+    <div class="day-grid">
+      {% for split in splits %}
+        <a href="/history/{{ split['id'] }}" class="day-card">
+          <span class="day-label">{{ split['name'] }}</span>
+          <span class="day-sub">View history →</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="hint">No history yet.</p>
+  {% endif %}
 </div>
 
-<div style="margin-top:20px; display:flex; gap:12px;">
+<div style="margin-top:20px;">
   <a href="/progress" class="btn btn-ghost">Progress Charts</a>
 </div>
 {% endblock %}

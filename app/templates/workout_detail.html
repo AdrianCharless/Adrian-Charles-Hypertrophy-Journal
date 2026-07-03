@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}{{ day_label }} — {{ workout["date"] }} — Hypertrophy Journal{% endblock %}
+{% block title %}{{ split['name'] }} — {{ workout["date"] }} — Hypertrophy Journal{% endblock %}
 
 {% block content %}
-<a href="/history/{{ workout['day_type'] }}" class="back-link">← Back to History</a>
+<a href="/history/{{ split['id'] }}" class="back-link">← Back to History</a>
 
 <div class="section-header">
-  <h1>{{ day_label }}</h1>
+  <h1>{{ split['name'] }}</h1>
   <p class="meta"><strong>Date:</strong> {{ workout["date"] }}</p>
 </div>
 
