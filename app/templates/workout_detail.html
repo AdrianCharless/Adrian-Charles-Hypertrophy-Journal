@@ -1,38 +1,39 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ day_label }} - {{ workout["date"] }}</title>
-</head>
-<body>
-    <a href="/history/{{ workout['day_type'] }}">← Back to History</a>
-    <h1>{{ day_label }}</h1>
-    <p><strong>Date:</strong> {{ workout["date"] }}</p>
+{% extends "base.html" %}
 
-    {% if sets|length == 0 %}
-      <p>No sets logged for this workout.</p>
-    {% else %}
-      <table border="1" cellpadding="6">
-        <thead>
+{% block title %}{{ day_label }} — {{ workout["date"] }} — Hypertrophy Journal{% endblock %}
+
+{% block content %}
+<a href="/history/{{ workout['day_type'] }}" class="back-link">← Back to History</a>
+
+<div class="section-header">
+  <h1>{{ day_label }}</h1>
+  <p class="meta"><strong>Date:</strong> {{ workout["date"] }}</p>
+</div>
+
+<div class="card">
+  {% if sets|length == 0 %}
+    <div class="empty">No sets logged for this workout.</div>
+  {% else %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Exercise</th>
+          <th>Set</th>
+          <th>Reps</th>
+          <th>Weight</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in sets %}
           <tr>
-            <th>Exercise</th>
-            <th>Set #</th>
-            <th>Reps</th>
-            <th>Weight</th>
+            <td>{{ row["exercise_name"] }}</td>
+            <td>{{ row["set_number"] }}</td>
+            <td>{{ row["reps"] }}</td>
+            <td>{{ row["weight"] }}</td>
           </tr>
-        </thead>
-        <tbody>
-          {% for row in sets %}
-            <tr>
-              <td>{{ row["exercise_name"] }}</td>
-              <td>{{ row["set_number"] }}</td>
-              <td>{{ row["reps"] }}</td>
-              <td>{{ row["weight"] }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% endif %}
-</body>
-</html>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

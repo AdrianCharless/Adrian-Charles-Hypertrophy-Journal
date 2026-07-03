@@ -1,29 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym Journal</title>
-</head>
-<body>
-    <h1>Gym Journal</h1>
-    <p>Select your workout day:</p>
+{% extends "base.html" %}
 
-    <ul>
-      {% for value, label in day_types %}
-        <li>
-          <a href="/workout/start?day_type={{ value }}">{{ label }}</a>
-        </li>
-      {% endfor %}
-    </ul>
-    <h2>History</h2>
-<ul>
-  {% for value, label in day_types %}
-    <li><a href="/history/{{ value }}">View {{ label }} days</a></li>
-  {% endfor %}
-</ul>
+{% block title %}Hypertrophy Journal{% endblock %}
 
-<p><a href="/progress">📈 Progress Charts</a></p>
+{% block content %}
+<div class="section-header">
+  <h1>Hypertrophy Journal</h1>
+  <p class="meta">Select a day to start logging your session.</p>
+</div>
 
-</body>
-</html>
+<div class="card">
+  <div class="badge">Start Workout</div>
+  <div class="day-grid">
+    {% for value, label in day_types %}
+      <a href="/workout/start?day_type={{ value }}" class="day-card">
+        <span class="day-label">{{ label }}</span>
+        <span class="day-sub">Start session →</span>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+  <div class="badge" style="background:rgba(34,197,94,0.12);color:var(--green);">History</div>
+  <div class="day-grid">
+    {% for value, label in day_types %}
+      <a href="/history/{{ value }}" class="day-card">
+        <span class="day-label">{{ label }}</span>
+        <span class="day-sub">View history →</span>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div style="margin-top:20px; display:flex; gap:12px;">
+  <a href="/progress" class="btn btn-ghost">Progress Charts</a>
+</div>
+{% endblock %}

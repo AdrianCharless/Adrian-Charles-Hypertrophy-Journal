@@ -1,24 +1,26 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ day_label }} History</title>
-</head>
-<body>
-      <a href="/">← Back</a>
-    <h1>{{ day_label }} History</h1>
+{% extends "base.html" %}
 
-    {% if workouts|length == 0 %}
-      <p>No workouts logged yet.</p>
-    {% else %}
-      <ul>
-        {% for w in workouts %}
-          <li>
-            <a href="/workout/{{ w['id'] }}">{{ w["date"] }}</a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-</body>
-</html>
+{% block title %}{{ day_label }} History — Hypertrophy Journal{% endblock %}
+
+{% block content %}
+<a href="/" class="back-link">← Back</a>
+
+<div class="section-header">
+  <h1>{{ day_label }}</h1>
+  <p class="meta">Session history</p>
+</div>
+
+<div class="card">
+  {% if workouts|length == 0 %}
+    <div class="empty">No workouts logged yet.</div>
+  {% else %}
+    <ul class="history-list">
+      {% for w in workouts %}
+        <li>
+          <a href="/workout/{{ w['id'] }}">{{ w["date"] }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endblock %}

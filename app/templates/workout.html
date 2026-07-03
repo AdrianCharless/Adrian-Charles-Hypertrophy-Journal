@@ -1,95 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ day_label }} - Gym Journal</title>
-</head>
-<body>
-    <a href="/">← Back</a>
+{% extends "base.html" %}
 
-    <h1>{{ day_label }}</h1>
-    <p><strong>Today:</strong> {{ today }}</p>
+{% block title %}{{ day_label }} — Hypertrophy Journal{% endblock %}
 
-    <hr />
+{% block content %}
+<a href="/" class="back-link">← Back</a>
 
-    <h2>Last {{ day_label }} day</h2>
+<div class="section-header">
+  <h1>{{ day_label }}</h1>
+  <p class="meta"><strong>Today:</strong> {{ today }}</p>
+</div>
 
-    {% if last_workout %}
-      <p><strong>Date:</strong> {{ last_workout["date"] }}</p>
-
-      {% if last_sets|length == 0 %}
-        <p>No sets logged for that session.</p>
-      {% else %}
-        <table border="1" cellpadding="6">
-          <thead>
-            <tr>
-              <th>Exercise</th>
-              <th>Set #</th>
-            <th>Weight</th>
-              <th>Reps</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in last_sets %}
-              <tr>
-                <td>{{ row["exercise_name"] }}</td>
-                <td>{{ row["set_number"] }}</td>
-                <td>{{ row["weight"] }}</td>
-                <td>{{ row["reps"] }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% endif %}
+<!-- Previous session -->
+<div class="card">
+  <div class="badge">Last Session</div>
+  {% if last_workout %}
+    <p class="meta"><strong>Date:</strong> {{ last_workout["date"] }}</p>
+    {% if last_sets|length == 0 %}
+      <p class="hint">No sets logged for that session.</p>
     {% else %}
-      <p>No previous {{ day_label }} workout found yet. No better time to start than Today!</p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th>Set</th>
+            <th>Weight</th>
+            <th>Reps</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in last_sets %}
+            <tr>
+              <td>{{ row["exercise_name"] }}</td>
+              <td>{{ row["set_number"] }}</td>
+              <td>{{ row["weight"] }}</td>
+              <td>{{ row["reps"] }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     {% endif %}
+  {% else %}
+    <p class="hint">No previous {{ day_label }} workout found yet. No better time to start than today!</p>
+  {% endif %}
+</div>
 
-    <hr />
+<!-- Log today -->
+<div class="card" style="margin-top:20px;">
+  <div class="badge" style="background:rgba(249,115,22,0.15);color:var(--accent);">Log Today</div>
 
-    <h2>Log today</h2>
+  <form method="post" action="/workout/save">
+    <input type="hidden" name="day_type" value="{{ day_type }}" />
+    <input type="hidden" name="date" value="{{ today }}" />
 
-<form method="post" action="/workout/save">
-  <input type="hidden" name="day_type" value="{{ day_type }}" />
-  <input type="hidden" name="date" value="{{ today }}" />
+    <div style="overflow-x:auto;">
+      <table class="form-table">
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th style="width:80px;">Set #</th>
+            <th style="width:90px;">Weight</th>
+            <th style="width:80px;">Reps</th>
+          </tr>
+        </thead>
+        <tbody id="today-sets-body">
+          {% for i in range(1, 6) %}
+          <tr>
+            <td><input name="exercise_name" placeholder="e.g. Squat" /></td>
+            <td><input name="set_number" type="number" value="{{ i }}" min="1" /></td>
+            <td><input name="weight" type="number" step="any" min="0" placeholder="kg" /></td>
+            <td><input name="reps" type="number" min="1" /></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-  <p>Add rows for each set you do.</p>
+    <div class="btn-row">
+      <button type="button" id="add-set-btn" class="btn btn-ghost">+ Add Set</button>
+      <button type="submit" class="btn btn-primary">Save Workout</button>
+    </div>
+  </form>
+</div>
 
-  <table border="1" cellpadding="6">
-    <thead>
-      <tr>
-        <th>Exercise</th>
-        <th>Set #</th>
-        <th>Weight</th>
-        <th>Reps</th>
-      </tr>
-    </thead>
-    <tbody id="today-sets-body">
-      <!-- Start with 5 blank rows (we’ll make this smarter later) -->
-      {% for i in range(1, 6) %}
-      <tr>
-        <td><input name="exercise_name" placeholder="e.g. Squat" /></td>
-        <td><input name="set_number" type="number" value="{{ i }}" min="1" /></td>
-        <td><input name="weight" type="number" step="any" min="0" /></td>
-        <td><input name="reps" type="number" min="1" /></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <p style="margin-top: 12px;">
-    <button type="button" id="add-set-btn">+ Add Set</button>
-    <button type="submit">Save Workout</button>
-</p>
-</form>
 <script>
   (function () {
     const tbody = document.getElementById("today-sets-body");
     const addBtn = document.getElementById("add-set-btn");
 
     function nextSetNumber() {
-      // Find max set_number currently in the table and add 1
       const inputs = tbody.querySelectorAll('input[name="set_number"]');
       let max = 0;
       inputs.forEach((inp) => {
@@ -109,8 +107,8 @@
       tr.innerHTML = `
         <td><input name="exercise_name" placeholder="e.g. Squat" value="${exName}"/></td>
         <td><input name="set_number" type="number" min="1" value="${setNo}"/></td>
+        <td><input name="weight" type="number" step="any" min="0" placeholder="kg" value="${weight}"/></td>
         <td><input name="reps" type="number" min="1" value="${reps}"/></td>
-        <td><input name="weight" type="number" step="any" min="0" value="${weight}"/></td>
       `;
       tbody.appendChild(tr);
     }
@@ -118,5 +116,4 @@
     addBtn.addEventListener("click", () => addRow());
   })();
 </script>
-</body>
-</html>
+{% endblock %}

@@ -11,6 +11,7 @@ def create_app():
     @app.before_request
     def _auth_gate():
         return require_password()
+    
     BASE_DIR = Path(__file__).resolve().parent.parent
 
     app.config["DATABASE"] = str(BASE_DIR / "instance" / "gym_journal.sqlite")

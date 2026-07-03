@@ -1,114 +1,156 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Progress</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <a href="/">← Back</a>
-    <h1>Progress</h1>
+{% extends "base.html" %}
 
-    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
-      <div>
-        <label>Day Type</label><br />
-        <select id="dayType">
-          <option value="">All</option>
-          {% for value, label in day_types %}
-            <option value="{{ value }}">{{ label }}</option>
-          {% endfor %}
-        </select>
-      </div>
+{% block title %}Progress — Hypertrophy Journal{% endblock %}
 
-      <div>
-        <label>Exercise</label><br />
-        <select id="exercise">
-          <option value="">-- choose --</option>
-          {% for ex in exercises %}
-            <option value="{{ ex['id'] }}">{{ ex['name'] }}</option>
-          {% endfor %}
-        </select>
-      </div>
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  .filter-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .filter-group { display: flex; flex-direction: column; min-width: 160px; }
+</style>
+{% endblock %}
 
-      <div>
-        <label>Metric</label><br />
-        <select id="metric">
-          <option value="top_weight">Top Set Weight</option>
-          <option value="e1rm">Estimated 1RM</option>
-        </select>
-      </div>
+{% block content %}
+<a href="/" class="back-link">← Back</a>
+
+<div class="section-header">
+  <h1>Progress</h1>
+  <p class="meta">Track your strength over time.</p>
+</div>
+
+<div class="card">
+  <div class="filter-row">
+    <div class="filter-group">
+      <label for="dayType">Day Type</label>
+      <select id="dayType">
+        <option value="">All</option>
+        {% for value, label in day_types %}
+          <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
     </div>
 
-    <div style="margin-top:18px;">
-      <canvas id="chart" width="900" height="420"></canvas>
+    <div class="filter-group">
+      <label for="exercise">Exercise</label>
+      <select id="exercise">
+        <option value="">— choose —</option>
+        {% for ex in exercises %}
+          <option value="{{ ex['id'] }}">{{ ex['name'] }}</option>
+        {% endfor %}
+      </select>
     </div>
 
-    <p id="hint" style="margin-top:10px;"></p>
+    <div class="filter-group">
+      <label for="metric">Metric</label>
+      <select id="metric">
+        <option value="top_weight">Top Set Weight</option>
+        <option value="e1rm">Estimated 1RM</option>
+      </select>
+    </div>
+  </div>
 
-    <script>
-      const dayTypeEl = document.getElementById("dayType");
-      const exerciseEl = document.getElementById("exercise");
-      const metricEl = document.getElementById("metric");
-      const hintEl = document.getElementById("hint");
+  <div style="margin-top:28px; position:relative;">
+    <canvas id="chart"></canvas>
+  </div>
 
-      const ctx = document.getElementById("chart").getContext("2d");
+  <p id="hint" class="hint" style="margin-top:12px;"></p>
+</div>
 
-      const chart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: [],
-          datasets: [{ label: "Progress", data: [] }]
+<script>
+  const dayTypeEl  = document.getElementById("dayType");
+  const exerciseEl = document.getElementById("exercise");
+  const metricEl   = document.getElementById("metric");
+  const hintEl     = document.getElementById("hint");
+
+  const ctx = document.getElementById("chart").getContext("2d");
+
+  Chart.defaults.color = "#7a7f93";
+  Chart.defaults.borderColor = "#2a2d36";
+
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Progress",
+        data: [],
+        borderColor: "#f97316",
+        backgroundColor: "rgba(249,115,22,0.1)",
+        borderWidth: 2,
+        pointBackgroundColor: "#f97316",
+        pointRadius: 4,
+        tension: 0.3,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#16181d",
+          borderColor: "#2a2d36",
+          borderWidth: 1,
+          titleColor: "#e8eaf0",
+          bodyColor: "#7a7f93",
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: "#1e2028" },
+          ticks: { maxRotation: 30 }
         },
-        options: {
-          responsive: false,
-          scales: {
-            y: { beginAtZero: false }
-          }
+        y: {
+          beginAtZero: false,
+          grid: { color: "#1e2028" },
         }
-      });
-
-      async function refreshChart() {
-        const exerciseId = exerciseEl.value;
-        const dayType = dayTypeEl.value;
-        const metric = metricEl.value;
-
-        if (!exerciseId) {
-          chart.data.labels = [];
-          chart.data.datasets[0].data = [];
-          chart.update();
-          hintEl.textContent = "Pick an exercise to view progress.";
-          return;
-        }
-
-        const qs = new URLSearchParams();
-        qs.set("exercise_id", exerciseId);
-        qs.set("metric", metric);
-        if (dayType) qs.set("day_type", dayType);
-
-        const res = await fetch(`/api/progress?${qs.toString()}`);
-        const data = await res.json();
-
-        chart.data.labels = data.dates;
-        chart.data.datasets[0].data = data.values;
-
-        const metricLabel = metric === "top_weight" ? "Top Set Weight" : "Estimated 1RM";
-        chart.data.datasets[0].label = metricLabel;
-
-        chart.update();
-
-        hintEl.textContent =
-          data.dates.length
-            ? `${metricLabel} over ${data.dates.length} workouts`
-            : "No data yet for that selection.";
       }
+    }
+  });
 
-      dayTypeEl.addEventListener("change", refreshChart);
-      exerciseEl.addEventListener("change", refreshChart);
-      metricEl.addEventListener("change", refreshChart);
+  async function refreshChart() {
+    const exerciseId = exerciseEl.value;
+    const dayType    = dayTypeEl.value;
+    const metric     = metricEl.value;
 
-      refreshChart();
-    </script>
-  
-</body>
-</html>
+    if (!exerciseId) {
+      chart.data.labels = [];
+      chart.data.datasets[0].data = [];
+      chart.update();
+      hintEl.textContent = "Pick an exercise to view progress.";
+      return;
+    }
+
+    const qs = new URLSearchParams();
+    qs.set("exercise_id", exerciseId);
+    qs.set("metric", metric);
+    if (dayType) qs.set("day_type", dayType);
+
+    const res  = await fetch(`/api/progress?${qs.toString()}`);
+    const data = await res.json();
+
+    chart.data.labels = data.dates;
+    chart.data.datasets[0].data = data.values;
+
+    const metricLabel = metric === "top_weight" ? "Top Set Weight" : "Estimated 1RM";
+    chart.data.datasets[0].label = metricLabel;
+    chart.update();
+
+    hintEl.textContent = data.dates.length
+      ? `${metricLabel} across ${data.dates.length} session${data.dates.length !== 1 ? "s" : ""}`
+      : "No data yet for that selection.";
+  }
+
+  dayTypeEl.addEventListener("change", refreshChart);
+  exerciseEl.addEventListener("change", refreshChart);
+  metricEl.addEventListener("change", refreshChart);
+
+  refreshChart();
+</script>
+{% endblock %}
