@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Hyper Trophy</title>
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" href="data:image/png;base64,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">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hyper Trophy">
+<meta name="theme-color" content="#15130F">
+<style>
+  :root{
+    --bg:#15130F;
+    --surface:#211E17;
+    --surface2:#2A261C;
+    --line:#3A3527;
+    --chalk:#EDE8DC;
+    --muted:#8B8579;
+    --accent:#E8B92B;
+    --accent-dim:#5C4C17;
+    --steel:#5B7A87;
+    --danger:#B24A3C;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--chalk);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    padding-bottom:calc(78px + env(safe-area-inset-bottom));
+    padding-top:env(safe-area-inset-top);
+    overscroll-behavior-y:none;
+  }
+  h1,h2,h3{margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif; letter-spacing:-0.01em;}
+  .num{font-variant-numeric:tabular-nums; font-weight:800; letter-spacing:-0.02em;}
+  header.top{
+    padding:22px 20px 16px; position:sticky; top:0; z-index:5;
+    background:linear-gradient(180deg, var(--bg) 70%, transparent);
+  }
+  header.top .eyebrow{color:var(--accent); font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;}
+  header.top h1{font-size:26px; font-weight:800; margin-top:2px;}
+  main{padding:0 16px 24px;}
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* ---- Bottom nav ---- */
+  nav.tabs{
+    position:fixed; left:0; right:0; bottom:0; z-index:10;
+    display:flex; background:var(--surface);
+    border-top:1px solid var(--line);
+    padding:8px 6px calc(10px + env(safe-area-inset-bottom));
+  }
+  nav.tabs button{
+    flex:1; background:none; border:none; color:var(--muted);
+    font-size:11px; font-weight:600; letter-spacing:.02em;
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:6px 0; font-family:inherit;
+  }
+  nav.tabs button svg{width:22px; height:22px; stroke:var(--muted); fill:none; stroke-width:1.8;}
+  nav.tabs button.active{color:var(--accent);}
+  nav.tabs button.active svg{stroke:var(--accent);}
+
+  /* ---- Cards ---- */
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:16px; margin-bottom:12px;
+  }
+  .card-title{font-size:15px; font-weight:700; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;}
+  .muted{color:var(--muted);}
+  .pill{
+    display:inline-block; font-size:11px; font-weight:700; padding:3px 9px;
+    border-radius:20px; background:var(--accent-dim); color:var(--accent); letter-spacing:.03em;
+  }
+
+  /* ---- Buttons / inputs ---- */
+  button{cursor:pointer;}
+  .btn{
+    background:var(--accent); color:#1A1509; border:none; border-radius:11px;
+    font-weight:800; font-size:15px; padding:13px 16px; width:100%;
+    font-family:inherit; letter-spacing:.01em;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.secondary{background:var(--surface2); color:var(--chalk); border:1px solid var(--line);}
+  .btn.ghost{background:none; color:var(--steel); border:1px dashed var(--line); font-weight:700;}
+  .btn.danger{background:none; color:var(--danger); border:1px solid var(--danger);}
+  input, select{
+    background:var(--surface2); border:1px solid var(--line); color:var(--chalk);
+    border-radius:9px; padding:11px 12px; font-size:16px; font-family:inherit; width:100%;
+  }
+  input::placeholder{color:var(--muted);}
+  .row{display:flex; gap:8px;}
+  .row > *{flex:1;}
+  label.field{display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin:12px 0 5px;}
+  label.field:first-child{margin-top:0;}
+
+  /* ---- Set chips ---- */
+  .set-list{display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;}
+  .set-chip{
+    background:var(--surface2); border:1px solid var(--line); border-radius:8px;
+    padding:6px 10px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px;
+  }
+  .set-chip .x{color:var(--muted); font-weight:400;}
+  .set-chip button{background:none; border:none; color:var(--danger); font-size:15px; font-weight:800; padding:0; line-height:1;}
+
+  /* ---- Exercise block in log ---- */
+  .exercise-block{border-top:1px solid var(--line); padding-top:12px; margin-top:12px;}
+  .exercise-block:first-of-type{border-top:none; padding-top:0; margin-top:0;}
+  .exercise-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .exercise-head h3{font-size:15px; font-weight:700;}
+  .exercise-head button.remove{background:none; border:none; color:var(--muted); font-size:18px; padding:2px 6px;}
+
+  /* ---- History ---- */
+  .day-card .day-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;}
+  .day-head .date{font-weight:800; font-size:15px;}
+  .ex-row{padding:8px 0; border-top:1px solid var(--line);}
+  .ex-row:first-child{border-top:none;}
+  .ex-row .ex-name{font-weight:700; font-size:13.5px; margin-bottom:3px;}
+  .ex-row .sets{font-size:12.5px; color:var(--muted); line-height:1.5;}
+  .ex-row .sets b{color:var(--chalk); font-weight:700;}
+  .empty{text-align:center; padding:60px 20px; color:var(--muted);}
+  .empty .big{font-size:15px; font-weight:700; color:var(--chalk); margin-bottom:6px;}
+
+  /* ---- Progress ---- */
+  select#progressExercise{margin-bottom:12px;}
+  .stat-row{display:flex; gap:10px; margin-bottom:14px;}
+  .stat{flex:1; background:var(--surface2); border-radius:10px; padding:12px; text-align:center;}
+  .stat .v{font-size:20px; font-weight:800; color:var(--accent);}
+  .stat .l{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px;}
+  .chart-wrap{background:var(--surface2); border-radius:10px; padding:14px 10px 6px;}
+  svg.chart{width:100%; height:150px; display:block;}
+  .prog-log{margin-top:10px;}
+  .prog-log-row{display:flex; justify-content:space-between; padding:9px 2px; border-top:1px solid var(--line); font-size:13px;}
+  .prog-log-row:first-child{border-top:none;}
+
+  /* modal */
+  .sheet-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:20; display:none;
+  }
+  .sheet-backdrop.active{display:block;}
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:21;
+    background:var(--surface); border-radius:18px 18px 0 0; border:1px solid var(--line); border-bottom:none;
+    padding:18px 16px calc(20px + env(safe-area-inset-bottom));
+    transform:translateY(100%); transition:transform .25s ease;
+    max-height:80vh; overflow-y:auto;
+  }
+  .sheet.active{transform:translateY(0);}
+  .sheet-handle{width:36px; height:4px; background:var(--line); border-radius:3px; margin:0 auto 14px;}
+  .quick-set{display:flex; gap:8px; align-items:flex-end; margin-top:12px;}
+  .quick-set > div{flex:1;}
+
+  /* ---- Last-session history panel inside the sheet ---- */
+  #sheetHistory{margin-top:2px;}
+  .hist-panel{
+    background:var(--surface2); border:1px solid var(--line); border-radius:10px;
+    padding:10px 12px; margin-top:8px;
+  }
+  .hist-panel .hist-title{
+    font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;
+    letter-spacing:.08em; margin-bottom:6px;
+  }
+  .hist-row{display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-top:1px solid var(--line); font-size:13px;}
+  .hist-row:first-child{border-top:none;}
+  .hist-row .hist-date{color:var(--muted); white-space:nowrap; font-weight:600; font-size:12px;}
+  .hist-row .hist-sets{text-align:right; font-weight:700;}
+  .hist-row .hist-sets .x{color:var(--muted); font-weight:400;}
+  .hist-best{
+    display:flex; justify-content:space-between; align-items:center; margin-top:2px;
+    padding-top:8px; border-top:1px solid var(--line); font-size:12px; color:var(--accent); font-weight:700;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="eyebrow" id="headerEyebrow">Log</div>
+  <h1 id="headerTitle">Today's Lift</h1>
+</header>
+
+<main>
+
+  <!-- LOG VIEW -->
+  <section class="view active" id="view-log">
+    <div class="card">
+      <label class="field">Split / Day</label>
+      <select id="splitSelect"></select>
+      <input id="splitNameNew" placeholder="New split name" style="display:none; margin-top:8px;">
+      <div id="splitHistory"></div>
+      <label class="field">Date</label>
+      <input id="logDate" type="date">
+    </div>
+
+    <div id="exerciseBlocks"></div>
+
+    <button class="btn ghost" id="addExerciseBtn" style="margin-bottom:14px;">+ Add exercise</button>
+    <button class="btn" id="saveWorkoutBtn">Save workout</button>
+  </section>
+
+  <!-- HISTORY VIEW -->
+  <section class="view" id="view-history">
+    <div id="historyList"></div>
+  </section>
+
+  <!-- PROGRESS VIEW -->
+  <section class="view" id="view-progress">
+    <select id="progressExercise"></select>
+    <div id="progressBody"></div>
+  </section>
+
+</main>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="exerciseSheet">
+  <div class="sheet-handle"></div>
+  <label class="field">Exercise name</label>
+  <select id="sheetExerciseSelect"></select>
+  <input id="sheetExerciseNameNew" placeholder="New exercise name" style="display:none; margin-top:8px;" autocomplete="off">
+  <div id="sheetHistory"></div>
+  <div class="quick-set">
+    <div>
+      <label class="field">Weight</label>
+      <input id="sheetWeight" type="number" inputmode="decimal" placeholder="180">
+    </div>
+    <div>
+      <label class="field">Reps</label>
+      <input id="sheetReps" type="number" inputmode="numeric" placeholder="10">
+    </div>
+    <button class="btn secondary" id="sheetAddSetBtn" style="width:auto; padding:11px 16px;">Add</button>
+  </div>
+  <div class="set-list" id="sheetSetList"></div>
+  <button class="btn" id="sheetDoneBtn" style="margin-top:6px;">Done</button>
+</div>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-view="log">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg>
+    Log
+  </button>
+  <button class="tab-btn" data-view="history">
+    <svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    History
+  </button>
+  <button class="tab-btn" data-view="progress">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" stroke-linecap="round"/></svg>
+    Progress
+  </button>
+</nav>
+
+<script>
+/* ---------------- Storage ---------------- */
+const STORE_KEY = 'ironlog.workouts.v1';
+
+function loadWorkouts(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return seedData();
+}
+function saveWorkouts(){
+  localStorage.setItem(STORE_KEY, JSON.stringify(workouts));
+}
+
+/* Fresh installs start empty. (Previously auto-seeded with the user's own July data;
+   now available only via the explicit "Load sample data" action below, so friends
+   who open a shared link still see a genuinely empty log by default.) */
+function seedData(){
+  return [];
+}
+
+const SAMPLE_DATA = [{"date":"2026-07-01","split":"Lower Body","exercises":[{"name":"Hack squat","sets":[{"w":180,"r":8},{"w":180,"r":8}]},{"name":"Abduction","sets":[{"w":190,"r":10},{"w":200,"r":12}]},{"name":"Leg extension","sets":[{"w":60,"r":12},{"w":70,"r":12}]},{"name":"Calf raise","sets":[{"w":130,"r":12},{"w":150,"r":12}]},{"name":"Leg curl","sets":[{"w":70,"r":12},{"w":90,"r":10}]}]},{"date":"2026-07-02","split":"Upper Body","exercises":[{"name":"Bicep curl","sets":[{"w":40,"r":10},{"w":40,"r":10}]},{"name":"Hammer curl","sets":[{"w":40,"r":12},{"w":40,"r":12}]},{"name":"Chest fly","sets":[{"w":150,"r":8},{"w":135,"r":10}]},{"name":"Chest press","sets":[{"w":155,"r":12},{"w":165,"r":8}]},{"name":"Cable raises","sets":[{"w":12.5,"r":10},{"w":15,"r":10}]},{"name":"Rows","sets":[{"w":115,"r":10},{"w":115,"r":10}]},{"name":"Tricep push down","sets":[{"w":57.5,"r":8},{"w":52.5,"r":12}]},{"name":"Lat pull down","sets":[{"w":140,"r":9},{"w":140,"r":8}]},{"name":"Low row","sets":[{"w":35,"r":12},{"w":37.5,"r":12}]}]},{"date":"2026-07-04","split":"Lower Body","exercises":[{"name":"Hack squat","sets":[{"w":180,"r":10},{"w":180,"r":6}]},{"name":"Abduction","sets":[{"w":200,"r":12},{"w":210,"r":12}]},{"name":"Leg extension","sets":[{"w":70,"r":12},{"w":75,"r":12}]},{"name":"Calf raise","sets":[{"w":170,"r":12},{"w":180,"r":12}]},{"name":"Leg curl","sets":[{"w":90,"r":12},{"w":100,"r":10}]}]},{"date":"2026-07-06","split":"Upper Body","exercises":[{"name":"Bicep curl","sets":[{"w":40,"r":9},{"w":40,"r":8}]},{"name":"Chest fly","sets":[{"w":150,"r":12},{"w":155,"r":8}]},{"name":"Chest press","sets":[{"w":165,"r":8},{"w":155,"r":8}]},{"name":"Rows","sets":[{"w":115,"r":11},{"w":115,"r":11}]},{"name":"Tricep push down","sets":[{"w":57.5,"r":10},{"w":57.5,"r":9}]}]},{"date":"2026-07-07","split":"Lower Body","exercises":[{"name":"Hack squat","sets":[{"w":180,"r":12},{"w":200,"r":8}]},{"name":"Abduction","sets":[{"w":210,"r":12},{"w":220,"r":12}]},{"name":"Leg extension","sets":[{"w":80,"r":12},{"w":85,"r":12}]},{"name":"Calf raise","sets":[{"w":190,"r":12},{"w":200,"r":10}]},{"name":"Leg curl","sets":[{"w":100,"r":8},{"w":100,"r":9}]}]},{"date":"2026-07-10","split":"Lower Body","exercises":[{"name":"Hack squat","sets":[{"w":200,"r":11},{"w":200,"r":11}]},{"name":"Abduction","sets":[{"w":230,"r":12},{"w":240,"r":10}]},{"name":"Leg extension","sets":[{"w":85,"r":12},{"w":90,"r":12}]},{"name":"Calf raise","sets":[{"w":200,"r":9},{"w":200,"r":11}]},{"name":"Leg curl","sets":[{"w":100,"r":12},{"w":110,"r":9}]}]},{"date":"2026-07-10","split":"Upper Body","exercises":[{"name":"Bicep curl","sets":[{"w":40,"r":10},{"w":40,"r":9}]},{"name":"Chest fly","sets":[{"w":155,"r":9},{"w":155,"r":8}]},{"name":"Chest press","sets":[{"w":165,"r":10},{"w":165,"r":8}]},{"name":"Rows","sets":[{"w":115,"r":12},{"w":115,"r":10}]},{"name":"Tricep push down","sets":[{"w":57.5,"r":12},{"w":57.5,"r":10}]}]},{"date":"2026-07-11","split":"Upper Body","exercises":[{"name":"Chest fly (cable)","sets":[{"w":80,"r":12}]}]},{"date":"2026-07-13","split":"Lower Body","exercises":[{"name":"Hack squat","sets":[{"w":200,"r":11},{"w":200,"r":12}]},{"name":"Abduction","sets":[{"w":240,"r":10},{"w":240,"r":10}]},{"name":"Leg extension","sets":[{"w":95,"r":12},{"w":100,"r":10}]}]},{"date":"2026-07-14","split":"Upper Body","exercises":[{"name":"Bicep curl","sets":[{"w":40,"r":11},{"w":40,"r":8}]},{"name":"Chest press","sets":[{"w":165,"r":11},{"w":165,"r":9}]},{"name":"Tricep push down","sets":[{"w":57.5,"r":12},{"w":60,"r":9}]}]},{"date":"2026-07-15","split":"Shoulders and Arms","exercises":[{"name":"Shoulder smith press","sets":[{"w":155,"r":12},{"w":160,"r":10}]},{"name":"Bicep curl","sets":[{"w":40,"r":10},{"w":40,"r":8}]}]},{"date":"2026-07-16","split":"Lower Body","exercises":[{"name":"Abduction","sets":[{"w":240,"r":12},{"w":245,"r":12}]},{"name":"Leg extension","sets":[{"w":100,"r":10},{"w":100,"r":12}]}]},{"date":"2026-07-18","split":"Upper Body","exercises":[{"name":"Chest press","sets":[{"w":165,"r":10},{"w":155,"r":12}]}]},{"date":"2026-07-19","split":"Lower Body","exercises":[{"name":"Abduction","sets":[{"w":250,"r":12},{"w":260,"r":12}]},{"name":"Leg extension","sets":[{"w":105,"r":10},{"w":105,"r":10}]}]}];
+
+function loadSampleData(){
+  const withIds = SAMPLE_DATA.map(w => ({ id: cryptoId(), ...w }));
+  workouts = [...withIds, ...workouts];
+  saveWorkouts();
+}
+
+function cryptoId(){ return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+let workouts = loadWorkouts();
+
+/* ---------------- Nav ---------------- */
+const views = { log: document.getElementById('view-log'), history: document.getElementById('view-history'), progress: document.getElementById('view-progress') };
+const titles = { log: ['Log', "Today's Lift"], history: ['History', 'Past Workouts'], progress: ['Progress', 'Exercise Trends'] };
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    Object.values(views).forEach(v=>v.classList.remove('active'));
+    const key = btn.dataset.view;
+    views[key].classList.add('active');
+    document.getElementById('headerEyebrow').textContent = titles[key][0];
+    document.getElementById('headerTitle').textContent = titles[key][1];
+    if(key==='history') renderHistory();
+    if(key==='progress') renderProgress();
+  });
+});
+
+/* ---------------- Log view: draft state ---------------- */
+let draftExercises = []; // {name, sets:[{w,r}]}
+let editingIndex = null; // index in draftExercises being edited via sheet
+
+document.getElementById('logDate').valueAsDate = new Date();
+
+function renderExerciseBlocks(){
+  const wrap = document.getElementById('exerciseBlocks');
+  wrap.innerHTML = '';
+  draftExercises.forEach((ex, i)=>{
+    const block = document.createElement('div');
+    block.className = 'card exercise-block';
+    const setsText = ex.sets.length
+      ? ex.sets.map(s=>`<b>${s.w}</b>&nbsp;×&nbsp;${s.r}`).join(', ')
+      : '<span class="muted">No sets yet</span>';
+    block.innerHTML = `
+      <div class="exercise-head">
+        <h3>${escapeHtml(ex.name)}</h3>
+        <button class="remove" data-i="${i}" aria-label="Remove">✕</button>
+      </div>
+      <div class="ex-row" style="padding:0; border:none;"><div class="sets">${setsText}</div></div>
+      <button class="btn secondary" data-edit="${i}" style="margin-top:10px; padding:9px;">Edit sets</button>
+    `;
+    wrap.appendChild(block);
+  });
+  wrap.querySelectorAll('button.remove').forEach(b=>{
+    b.addEventListener('click', ()=>{ draftExercises.splice(+b.dataset.i,1); renderExerciseBlocks(); });
+  });
+  wrap.querySelectorAll('button[data-edit]').forEach(b=>{
+    b.addEventListener('click', ()=> openSheet(+b.dataset.edit));
+  });
+}
+
+document.getElementById('addExerciseBtn').addEventListener('click', ()=>{
+  draftExercises.push({ name:'', sets:[] });
+  openSheet(draftExercises.length-1);
+});
+
+/* ---- Sheet (add exercise + sets) ---- */
+const sheet = document.getElementById('exerciseSheet');
+const sheetBackdrop = document.getElementById('sheetBackdrop');
+
+function openSheet(index){
+  editingIndex = index;
+  const ex = draftExercises[index];
+  populateExerciseSelect(ex.name);
+  document.getElementById('sheetWeight').value = '';
+  document.getElementById('sheetReps').value = '';
+  renderSheetSets();
+  renderSheetHistory();
+  sheet.classList.add('active');
+  sheetBackdrop.classList.add('active');
+}
+function closeSheet(){
+  sheet.classList.remove('active');
+  sheetBackdrop.classList.remove('active');
+  // drop empty exercises with no name
+  if(editingIndex !== null && !draftExercises[editingIndex].name.trim() && draftExercises[editingIndex].sets.length===0){
+    draftExercises.splice(editingIndex,1);
+  }
+  editingIndex = null;
+  renderExerciseBlocks();
+}
+sheetBackdrop.addEventListener('click', closeSheet);
+document.getElementById('sheetDoneBtn').addEventListener('click', closeSheet);
+
+const NEW_VALUE = '__new__';
+
+/* Fill the exercise dropdown with every exercise name logged so far, plus an add-new option.
+   currentName pre-selects a match, or falls into "new" mode if it isn't in the list yet. */
+function populateExerciseSelect(currentName){
+  const sel = document.getElementById('sheetExerciseSelect');
+  const newInput = document.getElementById('sheetExerciseNameNew');
+  const names = allExerciseNames();
+  const options = ['<option value="">Select exercise…</option>']
+    .concat(names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`))
+    .concat(['<option value="'+NEW_VALUE+'">+ New exercise</option>']);
+  sel.innerHTML = options.join('');
+
+  const trimmed = (currentName || '').trim();
+  const matches = names.some(n => n.toLowerCase() === trimmed.toLowerCase());
+  if(trimmed && matches){
+    sel.value = names.find(n => n.toLowerCase() === trimmed.toLowerCase());
+    newInput.style.display = 'none';
+    newInput.value = '';
+  } else if(trimmed){
+    sel.value = NEW_VALUE;
+    newInput.style.display = 'block';
+    newInput.value = trimmed;
+  } else {
+    sel.value = '';
+    newInput.style.display = 'none';
+    newInput.value = '';
+  }
+}
+
+document.getElementById('sheetExerciseSelect').addEventListener('change', (e)=>{
+  const newInput = document.getElementById('sheetExerciseNameNew');
+  if(e.target.value === NEW_VALUE){
+    newInput.style.display = 'block';
+    newInput.value = '';
+    newInput.focus();
+    if(editingIndex!==null) draftExercises[editingIndex].name = '';
+  } else {
+    newInput.style.display = 'none';
+    newInput.value = '';
+    if(editingIndex!==null) draftExercises[editingIndex].name = e.target.value;
+  }
+  renderSheetHistory();
+});
+
+document.getElementById('sheetExerciseNameNew').addEventListener('input', (e)=>{
+  if(editingIndex!==null) draftExercises[editingIndex].name = e.target.value;
+  renderSheetHistory();
+});
+
+/* Look up the most recent sessions for a given exercise name (case-insensitive, trimmed match) */
+function getExerciseHistory(name, limit=5){
+  const target = name.trim().toLowerCase();
+  if(!target) return [];
+  const hits = [];
+  [...workouts].sort((a,b)=> b.date.localeCompare(a.date)).forEach(w=>{
+    w.exercises.forEach(ex=>{
+      if(ex.name.trim().toLowerCase() === target && ex.sets.length){
+        hits.push({ date: w.date, sets: ex.sets });
+      }
+    });
+  });
+  return hits.slice(0, limit);
+}
+
+function getCurrentSheetExerciseName(){
+  const sel = document.getElementById('sheetExerciseSelect');
+  if(sel.value === NEW_VALUE || sel.value === ''){
+    return document.getElementById('sheetExerciseNameNew').value;
+  }
+  return sel.value;
+}
+
+function renderSheetHistory(){
+  const name = getCurrentSheetExerciseName();
+  const panel = document.getElementById('sheetHistory');
+  const history = getExerciseHistory(name, 5);
+  if(!history.length){
+    panel.innerHTML = '';
+    return;
+  }
+  const rows = history.map(h=>{
+    const setsText = h.sets.map(s=>`${s.w}<span class="x">×</span>${s.r}`).join(', ');
+    return `<div class="hist-row"><span class="hist-date">${formatDate(h.date)}</span><span class="hist-sets">${setsText}</span></div>`;
+  }).join('');
+  const bestTop = history.reduce((m,h)=>{
+    const top = h.sets.reduce((mm,s)=> s.w>mm.w ? s : mm, h.sets[0]);
+    return top.w > m ? top.w : m;
+  }, 0);
+  panel.innerHTML = `
+    <div class="hist-panel">
+      <div class="hist-title">Last ${history.length} session${history.length>1?'s':''}</div>
+      ${rows}
+      <div class="hist-best"><span>Beat your best</span><span>${bestTop} lb+</span></div>
+    </div>`;
+}
+
+
+function renderSheetSets(){
+  const ex = draftExercises[editingIndex];
+  const list = document.getElementById('sheetSetList');
+  list.innerHTML = '';
+  ex.sets.forEach((s,i)=>{
+    const chip = document.createElement('div');
+    chip.className = 'set-chip';
+    chip.innerHTML = `${s.w}<span class="x">×</span>${s.r} <button data-i="${i}">✕</button>`;
+    list.appendChild(chip);
+  });
+  list.querySelectorAll('button').forEach(b=>{
+    b.addEventListener('click', ()=>{ ex.sets.splice(+b.dataset.i,1); renderSheetSets(); });
+  });
+}
+
+document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
+  const w = parseFloat(document.getElementById('sheetWeight').value);
+  const r = parseInt(document.getElementById('sheetReps').value);
+  if(isNaN(w) || isNaN(r)) return;
+  draftExercises[editingIndex].sets.push({w,r});
+  document.getElementById('sheetReps').value = '';
+  document.getElementById('sheetReps').focus();
+  renderSheetSets();
+});
+
+document.getElementById('saveWorkoutBtn').addEventListener('click', ()=>{
+  const split = getCurrentSplitName().trim();
+  const date = document.getElementById('logDate').value;
+  const cleaned = draftExercises.filter(e=>e.name.trim() && e.sets.length);
+  if(!split || !date || !cleaned.length){
+    alert('Select or name a split, pick a date, and add at least one exercise with sets.');
+    return;
+  }
+  workouts.unshift({ id: cryptoId(), date, split, exercises: cleaned });
+  saveWorkouts();
+  draftExercises = [];
+  populateSplitSelect();
+  renderExerciseBlocks();
+  document.querySelector('.tab-btn[data-view="history"]').click();
+});
+
+/* Fill the split dropdown with every split name logged so far, plus an add-new option */
+function populateSplitSelect(){
+  const sel = document.getElementById('splitSelect');
+  const newInput = document.getElementById('splitNameNew');
+  const prevValue = sel.value;
+  const splits = [...new Set(workouts.map(w=>w.split))].sort((a,b)=>a.localeCompare(b));
+  const options = ['<option value="">Select split…</option>']
+    .concat(splits.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`))
+    .concat(['<option value="'+NEW_VALUE+'">+ New split</option>']);
+  sel.innerHTML = options.join('');
+  if(splits.includes(prevValue)) sel.value = prevValue;
+  newInput.style.display = 'none';
+  newInput.value = '';
+}
+
+document.getElementById('splitSelect').addEventListener('change', (e)=>{
+  const newInput = document.getElementById('splitNameNew');
+  if(e.target.value === NEW_VALUE){
+    newInput.style.display = 'block';
+    newInput.value = '';
+    newInput.focus();
+  } else {
+    newInput.style.display = 'none';
+    newInput.value = '';
+  }
+  renderSplitHistory();
+});
+document.getElementById('splitNameNew').addEventListener('input', renderSplitHistory);
+
+function getCurrentSplitName(){
+  const sel = document.getElementById('splitSelect');
+  if(sel.value === NEW_VALUE || sel.value === ''){
+    return document.getElementById('splitNameNew').value;
+  }
+  return sel.value;
+}
+
+/* Every distinct exercise ever logged under this split, each with its most recent sets.
+   Sorted by most recently done first, so exercises you skipped last time still surface
+   from an earlier session instead of disappearing. */
+function getAllExercisesForSplit(name){
+  const target = name.trim().toLowerCase();
+  if(!target) return [];
+  const bySplit = workouts
+    .filter(w => w.split.trim().toLowerCase() === target)
+    .sort((a,b)=> b.date.localeCompare(a.date));
+
+  const seen = new Map(); // exercise name (lowercased) -> { name, date, sets }
+  bySplit.forEach(w=>{
+    w.exercises.forEach(ex=>{
+      const key = ex.name.trim().toLowerCase();
+      if(!seen.has(key) && ex.sets.length){
+        seen.set(key, { name: ex.name, date: w.date, sets: ex.sets });
+      }
+    });
+  });
+  return [...seen.values()].sort((a,b)=> b.date.localeCompare(a.date));
+}
+
+function renderSplitHistory(){
+  const name = getCurrentSplitName();
+  const panel = document.getElementById('splitHistory');
+  const exercises = getAllExercisesForSplit(name);
+  if(!exercises.length){
+    panel.innerHTML = '';
+    return;
+  }
+  const rows = exercises.map(ex=>{
+    const top = ex.sets.reduce((m,s)=> s.w>m.w ? s : m, ex.sets[0]);
+    return `<div class="hist-row"><span>${escapeHtml(ex.name)}<br><span class="hist-date">${formatDate(ex.date)}</span></span><span class="hist-sets">${top.w}<span class="x">×</span>${top.r} top</span></div>`;
+  }).join('');
+  panel.innerHTML = `
+    <div class="hist-panel">
+      <div class="hist-title">Everything logged on ${escapeHtml(name)}</div>
+      ${rows}
+      <button class="btn secondary" id="useLastExercisesBtn" style="margin-top:10px; padding:9px;">Use these exercises</button>
+    </div>`;
+  document.getElementById('useLastExercisesBtn').addEventListener('click', ()=>{
+    exercises.forEach(ex=>{
+      if(!draftExercises.some(d => d.name.trim().toLowerCase() === ex.name.trim().toLowerCase())){
+        draftExercises.push({ name: ex.name, sets: [] });
+      }
+    });
+    renderExerciseBlocks();
+  });
+}
+
+populateSplitSelect();
+renderExerciseBlocks();
+
+/* ---------------- History view ---------------- */
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  if(!workouts.length){
+    list.innerHTML = `<div class="empty"><div class="big">No workouts logged</div>Log your first lift to see it here.<br><button class="btn ghost" id="loadSampleBtn" style="margin-top:16px; max-width:220px; margin-left:auto; margin-right:auto;">Load sample data</button></div>`;
+    document.getElementById('loadSampleBtn').addEventListener('click', ()=>{
+      loadSampleData();
+      populateSplitSelect();
+      renderHistory();
+    });
+    return;
+  }
+  const sorted = [...workouts].sort((a,b)=> b.date.localeCompare(a.date));
+  list.innerHTML = sorted.map(w=>{
+    const rows = w.exercises.map(ex=>{
+      const setsText = ex.sets.map(s=>`<b>${s.w}</b>×${s.r}`).join(', ');
+      return `<div class="ex-row"><div class="ex-name">${escapeHtml(ex.name)}</div><div class="sets">${setsText}</div></div>`;
+    }).join('');
+    return `
+      <div class="card day-card">
+        <div class="day-head">
+          <div class="date">${formatDate(w.date)}</div>
+          <span class="pill">${escapeHtml(w.split)}</span>
+        </div>
+        ${rows}
+        <button class="btn danger" data-del="${w.id}" style="margin-top:12px; padding:9px;">Delete workout</button>
+      </div>`;
+  }).join('');
+  list.querySelectorAll('button[data-del]').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      if(confirm('Delete this workout?')){
+        workouts = workouts.filter(w=>w.id!==b.dataset.del);
+        saveWorkouts();
+        renderHistory();
+      }
+    });
+  });
+}
+
+/* ---------------- Progress view ---------------- */
+function allExerciseNames(){
+  const names = new Set();
+  workouts.forEach(w=>w.exercises.forEach(e=>names.add(e.name)));
+  return [...names].sort((a,b)=>a.localeCompare(b));
+}
+
+function renderProgress(){
+  const sel = document.getElementById('progressExercise');
+  const names = allExerciseNames();
+  if(!names.length){
+    document.getElementById('progressBody').innerHTML = `<div class="empty"><div class="big">Nothing to chart yet</div>Log a few workouts first.</div>`;
+    sel.innerHTML = '';
+    return;
+  }
+  const prevVal = sel.value;
+  sel.innerHTML = names.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  sel.value = names.includes(prevVal) ? prevVal : names[0];
+  drawProgress(sel.value);
+}
+document.getElementById('progressExercise').addEventListener('change', e=>drawProgress(e.target.value));
+
+function drawProgress(exerciseName){
+  const points = [];
+  [...workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>{
+    w.exercises.forEach(ex=>{
+      if(ex.name === exerciseName && ex.sets.length){
+        const top = ex.sets.reduce((m,s)=> s.w>m.w ? s : m, ex.sets[0]);
+        const volume = ex.sets.reduce((sum,s)=> sum + s.w*s.r, 0);
+        points.push({ date:w.date, top, volume, sets:ex.sets });
+      }
+    });
+  });
+
+  const body = document.getElementById('progressBody');
+  if(!points.length){ body.innerHTML = `<div class="empty">No data for this exercise.</div>`; return; }
+
+  const best = points.reduce((m,p)=> p.top.w>m.top.w ? p : m, points[0]);
+  const last = points[points.length-1];
+
+  const w = 320, h = 150, pad = 16;
+  const maxW = Math.max(...points.map(p=>p.top.w)) * 1.1;
+  const minW = Math.min(...points.map(p=>p.top.w)) * 0.9;
+  const range = (maxW-minW) || 1;
+  const stepX = points.length>1 ? (w-pad*2)/(points.length-1) : 0;
+  const coords = points.map((p,i)=>{
+    const x = pad + i*stepX;
+    const y = h - pad - ((p.top.w-minW)/range)*(h-pad*2);
+    return {x,y,p};
+  });
+  const pathD = coords.map((c,i)=> (i===0?'M':'L') + c.x.toFixed(1) + ',' + c.y.toFixed(1)).join(' ');
+  const areaD = pathD + ` L${coords[coords.length-1].x.toFixed(1)},${h-pad} L${coords[0].x.toFixed(1)},${h-pad} Z`;
+
+  const dots = coords.map(c=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" fill="#E8B92B"/>`).join('');
+
+  const logRows = [...points].reverse().map(p=>{
+    const setsText = p.sets.map(s=>`${s.w}×${s.r}`).join(', ');
+    return `<div class="prog-log-row"><span class="muted">${formatDate(p.date)}</span><span>${setsText}</span></div>`;
+  }).join('');
+
+  body.innerHTML = `
+    <div class="stat-row">
+      <div class="stat"><div class="v">${best.top.w}<span style="font-size:12px">lb</span></div><div class="l">Best top set</div></div>
+      <div class="stat"><div class="v">${last.top.w}<span style="font-size:12px">lb</span></div><div class="l">Last top set</div></div>
+      <div class="stat"><div class="v">${points.length}</div><div class="l">Sessions</div></div>
+    </div>
+    <div class="chart-wrap">
+      <svg class="chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+        <path d="${areaD}" fill="rgba(232,185,43,0.12)" stroke="none"/>
+        <path d="${pathD}" fill="none" stroke="#E8B92B" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        ${dots}
+      </svg>
+    </div>
+    <div class="prog-log">${logRows}</div>
+  `;
+}
+
+/* ---------------- Helpers ---------------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function formatDate(iso){
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+/* Offline support: cache the app shell on first successful load so it opens
+   without a network connection afterward. sw.js must be deployed alongside this file. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{ /* offline caching unavailable, app still works online */ });
+  });
+}
+
+</script>
+</body>
+</html>
