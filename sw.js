@@ -2,8 +2,8 @@
 // Network-first: always tries to fetch the latest version when online (so app
 // updates show up immediately), and only serves the cached copy when offline.
 
-const CACHE_NAME = 'hyper-trophy-v2';
-const APP_SHELL = ['./', './index.html'];
+const CACHE_NAME = 'hyper-trophy-v3';
+const APP_SHELL = ['./', './index.html', './icon.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
