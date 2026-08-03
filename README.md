@@ -32,18 +32,12 @@ Open it in Safari, add it to your home screen, and it behaves like a native app,
   unreliable about generating home screen icons from inline data URIs
 - Data lives in the browser's `localStorage`, private to each device, nothing is sent to a server
 
-## Deploying
+## Live
 
-All three files (`index.html`, `sw.js`, `icon.png`) need to sit at the same root level of wherever
-you host them, GitHub Pages, Netlify, any static host.
-
-**GitHub Pages**
-1. Push this repo to GitHub
-2. Repo → Settings → Pages → Source: "Deploy from a branch" → Branch: `main`, folder: `/ (root)`
-3. Your URL will be `https://<username>.github.io/<repo-name>/`
+Hosted at **https://hypertrophygymlog.netlify.app/**
 
 **Installing on iPhone**
-1. Open the hosted URL in **Safari** (must be Safari, not an in-app browser or another browser)
+1. Open that link in **Safari** (must be Safari, not an in-app browser or another browser)
 2. Tap the Share icon → **Add to Home Screen** → **Add**
 3. Launch it from the home screen icon from then on
 
