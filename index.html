@@ -359,10 +359,55 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 });
 
 /* ---------------- Log view: draft state ---------------- */
+const DRAFT_KEY = 'ironlog.draft.v1';
 let draftExercises = []; // {name, sets:[{w,r}]}
 let editingIndex = null; // index in draftExercises being edited via sheet
 
 document.getElementById('logDate').valueAsDate = new Date();
+
+/* Autosaves the in-progress workout (split, date, exercises, sets) so it survives
+   switching tabs, closing the app, or a phone lock, until it's actually saved or deleted. */
+function saveDraft(){
+  const draft = {
+    date: document.getElementById('logDate').value,
+    split: getCurrentSplitName(),
+    exercises: draftExercises
+  };
+  try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){ /* storage unavailable, draft just won't persist */ }
+}
+function clearDraft(){
+  try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+}
+function loadDraft(){
+  let raw;
+  try{ raw = localStorage.getItem(DRAFT_KEY); }catch(e){ return; }
+  if(!raw) return;
+  let draft;
+  try{ draft = JSON.parse(raw); }catch(e){ return; }
+  if(draft.exercises && draft.exercises.length){
+    draftExercises = draft.exercises;
+  }
+  if(draft.date){
+    document.getElementById('logDate').value = draft.date;
+  }
+  if(draft.split){
+    const sel = document.getElementById('splitSelect');
+    const newInput = document.getElementById('splitNameNew');
+    const optionExists = [...sel.options].some(o => o.value === draft.split);
+    if(optionExists){
+      sel.value = draft.split;
+      newInput.style.display = 'none';
+      newInput.value = '';
+    } else {
+      sel.value = NEW_VALUE;
+      newInput.style.display = 'block';
+      newInput.value = draft.split;
+    }
+    renderSplitHistory();
+  }
+}
+
+document.getElementById('logDate').addEventListener('change', saveDraft);
 
 function renderExerciseBlocks(){
   const wrap = document.getElementById('exerciseBlocks');
@@ -389,6 +434,7 @@ function renderExerciseBlocks(){
   wrap.querySelectorAll('button[data-edit]').forEach(b=>{
     b.addEventListener('click', ()=> openSheet(+b.dataset.edit));
   });
+  saveDraft();
 }
 
 document.getElementById('addExerciseBtn').addEventListener('click', ()=>{
@@ -467,11 +513,13 @@ document.getElementById('sheetExerciseSelect').addEventListener('change', (e)=>{
     if(editingIndex!==null) draftExercises[editingIndex].name = e.target.value;
   }
   renderSheetHistory();
+  saveDraft();
 });
 
 document.getElementById('sheetExerciseNameNew').addEventListener('input', (e)=>{
   if(editingIndex!==null) draftExercises[editingIndex].name = e.target.value;
   renderSheetHistory();
+  saveDraft();
 });
 
 /* Look up the most recent sessions for a given exercise name (case-insensitive, trimmed match) */
@@ -535,6 +583,7 @@ function renderSheetSets(){
   list.querySelectorAll('button').forEach(b=>{
     b.addEventListener('click', ()=>{ ex.sets.splice(+b.dataset.i,1); renderSheetSets(); });
   });
+  saveDraft();
 }
 
 document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
@@ -558,6 +607,7 @@ document.getElementById('saveWorkoutBtn').addEventListener('click', ()=>{
   workouts.unshift({ id: cryptoId(), date, split, exercises: cleaned });
   saveWorkouts();
   draftExercises = [];
+  clearDraft();
   populateSplitSelect();
   renderExerciseBlocks();
   document.querySelector('.tab-btn[data-view="history"]').click();
@@ -589,8 +639,9 @@ document.getElementById('splitSelect').addEventListener('change', (e)=>{
     newInput.value = '';
   }
   renderSplitHistory();
+  saveDraft();
 });
-document.getElementById('splitNameNew').addEventListener('input', renderSplitHistory);
+document.getElementById('splitNameNew').addEventListener('input', ()=>{ renderSplitHistory(); saveDraft(); });
 
 function getCurrentSplitName(){
   const sel = document.getElementById('splitSelect');
@@ -651,6 +702,7 @@ function renderSplitHistory(){
 }
 
 populateSplitSelect();
+loadDraft();
 renderExerciseBlocks();
 
 /* ---------------- History view ---------------- */
@@ -916,6 +968,13 @@ function formatDate(iso){
   const d = new Date(iso + 'T00:00:00');
   return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
 }
+
+/* Belt-and-suspenders: also catch app close/backgrounding even if some interaction
+   somehow missed an explicit saveDraft() call above. */
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden') saveDraft();
+});
+window.addEventListener('pagehide', saveDraft);
 
 /* Offline support: cache the app shell on first successful load so it opens
    without a network connection afterward. sw.js must be deployed alongside this file. */
