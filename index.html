@@ -162,6 +162,12 @@
   .cal-dot-spacer{width:5px; height:5px;}
   .cal-day-detail{margin-top:12px;}
 
+  /* ---- Draft original-date note ---- */
+  .draft-note{
+    background:var(--accent-dim); color:var(--accent); font-size:12.5px; font-weight:700;
+    padding:9px 12px; border-radius:9px; margin-bottom:12px; display:none;
+  }
+
   /* modal */
   .sheet-backdrop{
     position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:20; display:none;
@@ -176,7 +182,13 @@
   }
   .sheet.active{transform:translateY(0);}
   .sheet-handle{width:36px; height:4px; background:var(--line); border-radius:3px; margin:0 auto 14px;}
-  .quick-set{display:flex; gap:8px; align-items:flex-end; margin-top:12px;}
+  .field-with-toggle{display:flex; gap:8px; align-items:flex-end;}
+  .unit-toggle{
+    background:var(--surface2); border:1px solid var(--line); color:var(--muted);
+    border-radius:9px; padding:0 16px; height:44px; font-size:13px; font-weight:800;
+    font-family:inherit; white-space:nowrap; letter-spacing:.02em;
+  }
+  .unit-toggle.active{background:var(--accent); color:var(--accent-text); border-color:var(--accent);}
   .quick-set > div{flex:1;}
 
   /* ---- Last-session history panel inside the sheet ---- */
@@ -211,6 +223,7 @@
 
   <!-- LOG VIEW -->
   <section class="view active" id="view-log">
+    <div id="draftOriginalDateNote" class="draft-note"></div>
     <div class="card">
       <label class="field">Split / Day</label>
       <select id="splitSelect"></select>
@@ -271,17 +284,21 @@
   <select id="sheetExerciseSelect"></select>
   <input id="sheetExerciseNameNew" placeholder="New exercise name" style="display:none; margin-top:8px;" autocomplete="off">
   <div id="sheetHistory"></div>
-  <div class="quick-set">
-    <div>
-      <label class="field">Weight</label>
+  <div class="field-with-toggle">
+    <div style="flex:1;">
+      <label class="field">Weight (optional)</label>
       <input id="sheetWeight" type="number" inputmode="decimal" placeholder="180">
     </div>
-    <div>
-      <label class="field">Reps</label>
+    <button type="button" class="unit-toggle" id="bwToggle">BW</button>
+  </div>
+  <div class="field-with-toggle" style="margin-top:12px;">
+    <div style="flex:1;">
+      <label class="field" id="sheetRepsLabel">Reps</label>
       <input id="sheetReps" type="number" inputmode="numeric" placeholder="10">
     </div>
-    <button class="btn secondary" id="sheetAddSetBtn" style="width:auto; padding:11px 16px;">Add</button>
+    <button type="button" class="unit-toggle" id="timedToggle">Timed</button>
   </div>
+  <button class="btn secondary" id="sheetAddSetBtn" style="margin-top:12px; padding:11px;">Add set</button>
   <div class="set-list" id="sheetSetList"></div>
   <button class="btn" id="sheetDoneBtn" style="margin-top:6px;">Done</button>
 </div>
@@ -362,21 +379,33 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 const DRAFT_KEY = 'ironlog.draft.v1';
 let draftExercises = []; // {name, sets:[{w,r}]}
 let editingIndex = null; // index in draftExercises being edited via sheet
+let draftOriginalDate = null; // the date that was showing when this draft first got real content
 
 document.getElementById('logDate').valueAsDate = new Date();
 
 /* Autosaves the in-progress workout (split, date, exercises, sets) so it survives
-   switching tabs, closing the app, or a phone lock, until it's actually saved or deleted. */
+   switching tabs, closing the app, or a phone lock, until it's actually saved or deleted.
+   Also remembers the date the draft was originally started on (draftOriginalDate), separate
+   from the editable date field, since the date field always resets to today on reload. */
 function saveDraft(){
+  if(draftExercises.length === 0){
+    draftOriginalDate = null;
+  } else if(draftOriginalDate === null){
+    draftOriginalDate = document.getElementById('logDate').value;
+  }
   const draft = {
     date: document.getElementById('logDate').value,
     split: getCurrentSplitName(),
-    exercises: draftExercises
+    exercises: draftExercises,
+    originalDate: draftOriginalDate
   };
   try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){ /* storage unavailable, draft just won't persist */ }
+  renderDraftNote();
 }
 function clearDraft(){
+  draftOriginalDate = null;
   try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
+  renderDraftNote();
 }
 function loadDraft(){
   let raw;
@@ -386,10 +415,12 @@ function loadDraft(){
   try{ draft = JSON.parse(raw); }catch(e){ return; }
   if(draft.exercises && draft.exercises.length){
     draftExercises = draft.exercises;
+    draftOriginalDate = draft.originalDate || draft.date || null;
   }
-  if(draft.date){
-    document.getElementById('logDate').value = draft.date;
-  }
+  // Intentionally NOT restoring draft.date here: the date field should always default to
+  // today on load (already set above), not silently jump back to whenever an unfinished
+  // draft was originally started. If you're finishing an old draft on a later day, set the
+  // date yourself; it'll autosave from that point on same as everything else.
   if(draft.split){
     const sel = document.getElementById('splitSelect');
     const newInput = document.getElementById('splitNameNew');
@@ -405,6 +436,21 @@ function loadDraft(){
     }
     renderSplitHistory();
   }
+  renderDraftNote();
+}
+
+/* Shows "Original workout date: ..." whenever there's unsaved work sitting in the draft,
+   so re-opening an old unfinished session doesn't leave you guessing which day it was for. */
+function renderDraftNote(){
+  const el = document.getElementById('draftOriginalDateNote');
+  if(!el) return;
+  if(draftOriginalDate && draftExercises.length){
+    el.textContent = `Original workout date: ${formatDate(draftOriginalDate)}`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+    el.textContent = '';
+  }
 }
 
 document.getElementById('logDate').addEventListener('change', saveDraft);
@@ -416,7 +462,7 @@ function renderExerciseBlocks(){
     const block = document.createElement('div');
     block.className = 'card exercise-block';
     const setsText = ex.sets.length
-      ? ex.sets.map(s=>`<b>${s.w}</b>&nbsp;×&nbsp;${s.r}`).join(', ')
+      ? ex.sets.map(s=>formatSetHtml(s)).join(', ')
       : '<span class="muted">No sets yet</span>';
     block.innerHTML = `
       <div class="exercise-head">
@@ -446,12 +492,40 @@ document.getElementById('addExerciseBtn').addEventListener('click', ()=>{
 const sheet = document.getElementById('exerciseSheet');
 const sheetBackdrop = document.getElementById('sheetBackdrop');
 
+let sheetIsBodyweight = false;
+let sheetIsTimed = false;
+
+function setBwToggle(on){
+  sheetIsBodyweight = on;
+  const btn = document.getElementById('bwToggle');
+  const weightInput = document.getElementById('sheetWeight');
+  btn.classList.toggle('active', on);
+  weightInput.disabled = on;
+  if(on) weightInput.value = '';
+}
+function setTimedToggle(on){
+  sheetIsTimed = on;
+  const btn = document.getElementById('timedToggle');
+  const label = document.getElementById('sheetRepsLabel');
+  const repsInput = document.getElementById('sheetReps');
+  btn.classList.toggle('active', on);
+  label.textContent = on ? 'Seconds' : 'Reps';
+  repsInput.placeholder = on ? '30' : '10';
+}
+document.getElementById('bwToggle').addEventListener('click', ()=> setBwToggle(!sheetIsBodyweight));
+document.getElementById('timedToggle').addEventListener('click', ()=> setTimedToggle(!sheetIsTimed));
+
 function openSheet(index){
   editingIndex = index;
   const ex = draftExercises[index];
   populateExerciseSelect(ex.name);
   document.getElementById('sheetWeight').value = '';
   document.getElementById('sheetReps').value = '';
+  // Infer BW/Timed defaults from the exercise's most recent set, so re-opening
+  // "Pull ups" or "Dead hang" doesn't make you re-toggle every time.
+  const lastSet = ex.sets.length ? ex.sets[ex.sets.length-1] : null;
+  setBwToggle(!!(lastSet && lastSet.bw));
+  setTimedToggle(!!(lastSet && lastSet.unit === 'sec'));
   renderSheetSets();
   renderSheetHistory();
   sheet.classList.add('active');
@@ -554,18 +628,18 @@ function renderSheetHistory(){
     return;
   }
   const rows = history.map(h=>{
-    const setsText = h.sets.map(s=>`${s.w}<span class="x">×</span>${s.r}`).join(', ');
+    const setsText = h.sets.map(s=>formatSetHtml(s)).join(', ');
     return `<div class="hist-row"><span class="hist-date">${formatDate(h.date)}</span><span class="hist-sets">${setsText}</span></div>`;
   }).join('');
   const bestTop = history.reduce((m,h)=>{
-    const top = h.sets.reduce((mm,s)=> s.w>mm.w ? s : mm, h.sets[0]);
-    return top.w > m ? top.w : m;
+    const top = topWeightedSet(h.sets);
+    return top && top.w > m ? top.w : m;
   }, 0);
   panel.innerHTML = `
     <div class="hist-panel">
       <div class="hist-title">Last ${history.length} session${history.length>1?'s':''}</div>
       ${rows}
-      <div class="hist-best"><span>Beat your best</span><span>${bestTop} lb+</span></div>
+      ${bestTop > 0 ? `<div class="hist-best"><span>Beat your best</span><span>${bestTop} lb+</span></div>` : ''}
     </div>`;
 }
 
@@ -577,7 +651,7 @@ function renderSheetSets(){
   ex.sets.forEach((s,i)=>{
     const chip = document.createElement('div');
     chip.className = 'set-chip';
-    chip.innerHTML = `${s.w}<span class="x">×</span>${s.r} <button data-i="${i}">✕</button>`;
+    chip.innerHTML = `${formatSetHtml(s)} <button data-i="${i}">✕</button>`;
     list.appendChild(chip);
   });
   list.querySelectorAll('button').forEach(b=>{
@@ -587,10 +661,11 @@ function renderSheetSets(){
 }
 
 document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
-  const w = parseFloat(document.getElementById('sheetWeight').value);
+  const weightRaw = document.getElementById('sheetWeight').value.trim();
+  const w = sheetIsBodyweight ? null : (weightRaw === '' ? null : parseFloat(weightRaw));
   const r = parseInt(document.getElementById('sheetReps').value);
-  if(isNaN(w) || isNaN(r)) return;
-  draftExercises[editingIndex].sets.push({w,r});
+  if((!sheetIsBodyweight && weightRaw !== '' && isNaN(w)) || isNaN(r)) return;
+  draftExercises[editingIndex].sets.push({ w, bw: sheetIsBodyweight, r, unit: sheetIsTimed ? 'sec' : 'reps' });
   document.getElementById('sheetReps').value = '';
   document.getElementById('sheetReps').focus();
   renderSheetSets();
@@ -682,8 +757,9 @@ function renderSplitHistory(){
     return;
   }
   const rows = exercises.map(ex=>{
-    const top = ex.sets.reduce((m,s)=> s.w>m.w ? s : m, ex.sets[0]);
-    return `<div class="hist-row"><span>${escapeHtml(ex.name)}<br><span class="hist-date">${formatDate(ex.date)}</span></span><span class="hist-sets">${top.w}<span class="x">×</span>${top.r} top</span></div>`;
+    const top = topWeightedSet(ex.sets);
+    const label = top ? `${top.w}<span class="x">×</span>${top.r} top` : formatSetHtml(ex.sets[0]);
+    return `<div class="hist-row"><span>${escapeHtml(ex.name)}<br><span class="hist-date">${formatDate(ex.date)}</span></span><span class="hist-sets">${label}</span></div>`;
   }).join('');
   panel.innerHTML = `
     <div class="hist-panel">
@@ -720,7 +796,7 @@ function renderHistory(){
   const sorted = [...workouts].sort((a,b)=> b.date.localeCompare(a.date));
   list.innerHTML = sorted.map(w=>{
     const rows = w.exercises.map(ex=>{
-      const setsText = ex.sets.map(s=>`<b>${s.w}</b>×${s.r}`).join(', ');
+      const setsText = ex.sets.map(s=>formatSetHtml(s)).join(', ');
       return `<div class="ex-row"><div class="ex-name">${escapeHtml(ex.name)}</div><div class="sets">${setsText}</div></div>`;
     }).join('');
     return `
@@ -822,8 +898,8 @@ function drawProgress(exerciseName){
   [...workouts].sort((a,b)=>a.date.localeCompare(b.date)).forEach(w=>{
     w.exercises.forEach(ex=>{
       if(ex.name === exerciseName && ex.sets.length){
-        const top = ex.sets.reduce((m,s)=> s.w>m.w ? s : m, ex.sets[0]);
-        const volume = ex.sets.reduce((sum,s)=> sum + s.w*s.r, 0);
+        const top = topWeightedSet(ex.sets);
+        const volume = ex.sets.reduce((sum,s)=> sum + (typeof s.w === 'number' ? s.w*s.r : 0), 0);
         points.push({ date:w.date, top, volume, sets:ex.sets });
       }
     });
@@ -832,15 +908,34 @@ function drawProgress(exerciseName){
   const body = document.getElementById('progressBody');
   if(!points.length){ body.innerHTML = `<div class="empty">No data for this exercise.</div>`; return; }
 
-  const best = points.reduce((m,p)=> p.top.w>m.top.w ? p : m, points[0]);
-  const last = points[points.length-1];
+  const weightedPoints = points.filter(p => p.top !== null);
+
+  const logRows = [...points].reverse().map(p=>{
+    const setsText = p.sets.map(s=>formatSetHtml(s)).join(', ');
+    return `<div class="prog-log-row"><span class="muted">${formatDate(p.date)}</span><span>${setsText}</span></div>`;
+  }).join('');
+
+  if(!weightedPoints.length){
+    // Every session for this exercise so far is planned (rep targets only, no weight yet).
+    body.innerHTML = `
+      <div class="stat-row">
+        <div class="stat"><div class="v">${points.length}</div><div class="l">Planned sessions</div></div>
+      </div>
+      <div class="muted" style="font-size:13px; margin-bottom:10px;">No weight logged yet for this exercise, so there's nothing to chart. Add a weight next time you do it and a trend line will appear here.</div>
+      <div class="prog-log">${logRows}</div>
+    `;
+    return;
+  }
+
+  const best = weightedPoints.reduce((m,p)=> p.top.w>m.top.w ? p : m, weightedPoints[0]);
+  const last = weightedPoints[weightedPoints.length-1];
 
   const w = 320, h = 150, pad = 16;
-  const maxW = Math.max(...points.map(p=>p.top.w)) * 1.1;
-  const minW = Math.min(...points.map(p=>p.top.w)) * 0.9;
+  const maxW = Math.max(...weightedPoints.map(p=>p.top.w)) * 1.1;
+  const minW = Math.min(...weightedPoints.map(p=>p.top.w)) * 0.9;
   const range = (maxW-minW) || 1;
-  const stepX = points.length>1 ? (w-pad*2)/(points.length-1) : 0;
-  const coords = points.map((p,i)=>{
+  const stepX = weightedPoints.length>1 ? (w-pad*2)/(weightedPoints.length-1) : 0;
+  const coords = weightedPoints.map((p,i)=>{
     const x = pad + i*stepX;
     const y = h - pad - ((p.top.w-minW)/range)*(h-pad*2);
     return {x,y,p};
@@ -849,11 +944,6 @@ function drawProgress(exerciseName){
   const areaD = pathD + ` L${coords[coords.length-1].x.toFixed(1)},${h-pad} L${coords[0].x.toFixed(1)},${h-pad} Z`;
 
   const dots = coords.map(c=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.2" fill="#E8B92B"/>`).join('');
-
-  const logRows = [...points].reverse().map(p=>{
-    const setsText = p.sets.map(s=>`${s.w}×${s.r}`).join(', ');
-    return `<div class="prog-log-row"><span class="muted">${formatDate(p.date)}</span><span>${setsText}</span></div>`;
-  }).join('');
 
   body.innerHTML = `
     <div class="stat-row">
@@ -952,7 +1042,7 @@ function renderCalDayDetail(){
   }
   const body = dayWorkouts.map(w=>{
     const rows = w.exercises.map(ex=>{
-      const setsText = ex.sets.map(s=>`<b>${s.w}</b>×${s.r}`).join(', ');
+      const setsText = ex.sets.map(s=>formatSetHtml(s)).join(', ');
       return `<div class="ex-row"><div class="ex-name">${escapeHtml(ex.name)}</div><div class="sets">${setsText}</div></div>`;
     }).join('');
     return `<div class="card cal-day-detail"><div class="day-head"><div class="date">${label}</div><span class="pill">${escapeHtml(w.split)}</span></div>${rows}</div>`;
@@ -961,6 +1051,26 @@ function renderCalDayDetail(){
 }
 
 /* ---------------- Helpers ---------------- */
+/* A set with no weight entered (planning/prep mode) is stored as w: null.
+   These two helpers keep every display and stat calculation null-safe in one place. */
+function formatSetHtml(s){
+  const unit = s.unit === 'sec' ? 'sec' : 'reps';
+  const countText = unit === 'sec' ? `${s.r}s` : `${s.r}`;
+  const sep = unit === 'sec' ? ' · ' : '×';
+  if(s.bw){
+    return `<b>BW</b>${sep}${countText}`;
+  }
+  if(s.w !== null && s.w !== undefined && s.w !== ''){
+    return `<b>${s.w}</b>${sep}${countText}`;
+  }
+  return unit === 'sec' ? `${countText}` : `${countText} reps`;
+}
+function topWeightedSet(sets){
+  const weighted = sets.filter(s => typeof s.w === 'number' && !isNaN(s.w));
+  if(!weighted.length) return null;
+  return weighted.reduce((m,s)=> s.w>m.w ? s : m, weighted[0]);
+}
+
 function escapeHtml(str){
   return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
