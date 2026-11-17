@@ -187,6 +187,16 @@
   .time-text{font-size:12px; color:var(--muted); font-weight:600; margin:-2px 0 8px;}
 
   /* ---- Draft original-date note ---- */
+  .edit-banner{
+    background:var(--accent-dim); color:var(--accent); font-size:13px; font-weight:700;
+    border-radius:12px; padding:10px 12px; margin-bottom:12px;
+  }
+  .edit-banner button{
+    background:none; border:1px solid var(--accent); color:var(--accent); border-radius:9px;
+    padding:6px 10px; font-size:12px; font-weight:800; font-family:inherit; flex-shrink:0;
+  }
+  .card-actions{display:flex; gap:8px; margin-top:12px;}
+  .card-actions .btn{flex:1; margin-top:0 !important;}
   .draft-note{
     background:var(--accent-dim); color:var(--accent); font-size:12.5px; font-weight:700;
     padding:9px 12px; border-radius:9px; margin-bottom:12px; display:none;
@@ -247,6 +257,7 @@
 
   <!-- LOG VIEW -->
   <section class="view active" id="view-log">
+    <div id="editBanner" class="edit-banner"><span id="editBannerText"></span><button type="button" id="cancelEditBtn">Cancel edit</button></div>
     <div id="draftOriginalDateNote" class="draft-note"></div>
     <div class="card">
       <label class="field">Split / Day</label>
@@ -421,6 +432,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 const DRAFT_KEY = 'ironlog.draft.v1';
 let draftExercises = []; // {name, sets:[{w,r}]}
 let editingIndex = null; // index in draftExercises being edited via sheet
+let editingWorkoutId = null; // id of a saved workout being edited via the Log tab, or null for a new workout
 let draftOriginalDate = null; // the date that was showing when this draft first got real content
 
 document.getElementById('logDate').valueAsDate = new Date();
@@ -430,7 +442,7 @@ document.getElementById('logDate').valueAsDate = new Date();
    Also remembers the date the draft was originally started on (draftOriginalDate), separate
    from the editable date field, since the date field always resets to today on reload. */
 function saveDraft(){
-  if(draftExercises.length === 0){
+  if(draftExercises.length === 0 || editingWorkoutId){
     draftOriginalDate = null;
   } else if(draftOriginalDate === null){
     draftOriginalDate = document.getElementById('logDate').value;
@@ -440,6 +452,7 @@ function saveDraft(){
     split: getCurrentSplitName(),
     exercises: draftExercises,
     originalDate: draftOriginalDate,
+    editingId: editingWorkoutId,
     startTime: document.getElementById('startTime').value,
     endTime: document.getElementById('endTime').value
   };
@@ -448,6 +461,7 @@ function saveDraft(){
 }
 function clearDraft(){
   draftOriginalDate = null;
+  editingWorkoutId = null;
   try{ localStorage.removeItem(DRAFT_KEY); }catch(e){}
   renderDraftNote();
 }
@@ -457,7 +471,14 @@ function loadDraft(){
   if(!raw) return;
   let draft;
   try{ draft = JSON.parse(raw); }catch(e){ return; }
-  if(draft.exercises && draft.exercises.length){
+  const resumeEdit = !!(draft.editingId && workouts.some(w=>w.id===draft.editingId));
+  if(resumeEdit){
+    // Resuming an edit of a saved workout: its date belongs to that workout, so restore it.
+    editingWorkoutId = draft.editingId;
+    draftExercises = draft.exercises || [];
+    draftOriginalDate = null;
+    if(draft.date) document.getElementById('logDate').value = draft.date;
+  } else if(draft.exercises && draft.exercises.length){
     draftExercises = draft.exercises;
     draftOriginalDate = draft.originalDate || draft.date || null;
   }
@@ -469,22 +490,28 @@ function loadDraft(){
   // today on load (already set above), not silently jump back to whenever an unfinished
   // draft was originally started. If you're finishing an old draft on a later day, set the
   // date yourself; it'll autosave from that point on same as everything else.
-  if(draft.split){
-    const sel = document.getElementById('splitSelect');
-    const newInput = document.getElementById('splitNameNew');
-    const optionExists = [...sel.options].some(o => o.value === draft.split);
-    if(optionExists){
-      sel.value = draft.split;
-      newInput.style.display = 'none';
-      newInput.value = '';
-    } else {
-      sel.value = NEW_VALUE;
-      newInput.style.display = 'block';
-      newInput.value = draft.split;
-    }
-    renderSplitHistory();
-  }
+  if(draft.split) setSplitField(draft.split);
   renderDraftNote();
+}
+
+/* Puts a split name into the split dropdown (or the "+ New split" box if it isn't in the list). */
+function setSplitField(name){
+  const sel = document.getElementById('splitSelect');
+  const newInput = document.getElementById('splitNameNew');
+  if(!name){
+    sel.value = '';
+    newInput.style.display = 'none';
+    newInput.value = '';
+  } else if([...sel.options].some(o => o.value === name)){
+    sel.value = name;
+    newInput.style.display = 'none';
+    newInput.value = '';
+  } else {
+    sel.value = NEW_VALUE;
+    newInput.style.display = 'block';
+    newInput.value = name;
+  }
+  renderSplitHistory();
 }
 
 /* Shows "Original workout date: ..." whenever there's unsaved work sitting in the draft,
@@ -492,7 +519,16 @@ function loadDraft(){
 function renderDraftNote(){
   const el = document.getElementById('draftOriginalDateNote');
   if(!el) return;
-  if(draftOriginalDate && draftExercises.length){
+  const banner = document.getElementById('editBanner');
+  const editing = editingWorkoutId ? workouts.find(w=>w.id===editingWorkoutId) : null;
+  if(editing){
+    document.getElementById('editBannerText').textContent = `Editing workout from ${formatDate(editing.date)}`;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+  document.getElementById('saveWorkoutBtn').textContent = editing ? 'Save changes' : 'Save workout';
+  if(!editing && draftOriginalDate && draftExercises.length){
     el.textContent = `Original workout date: ${formatDate(draftOriginalDate)}`;
     el.style.display = 'block';
   } else {
@@ -809,6 +845,39 @@ document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
   if(res === 'added') document.getElementById('sheetReps').focus();
 });
 
+/* ---- Edit a saved workout (reuses the Log tab) ---- */
+function startEditWorkout(id){
+  const w = workouts.find(x=>x.id===id);
+  if(!w) return;
+  if(editingWorkoutId){
+    if(!confirm('You are in the middle of editing another workout. Discard those changes and edit this one instead?')) return;
+  } else if(draftExercises.length){
+    if(!confirm('You have an unsaved workout in progress. Replace it with this one? Your unsaved sets will be lost.')) return;
+  }
+  editingWorkoutId = id;
+  draftExercises = JSON.parse(JSON.stringify(w.exercises));
+  draftOriginalDate = null;
+  document.getElementById('logDate').value = w.date;
+  document.getElementById('startTime').value = w.startTime || '';
+  document.getElementById('endTime').value = w.endTime || '';
+  setSplitField(w.split);
+  updateDurationChip();
+  renderExerciseBlocks(); // also autosaves the draft with editingId
+  document.querySelector('.tab-btn[data-view="log"]').click();
+  window.scrollTo(0,0);
+}
+document.getElementById('cancelEditBtn').addEventListener('click', ()=>{
+  if(!confirm('Discard your changes to this workout?')) return;
+  draftExercises = [];
+  document.getElementById('logDate').valueAsDate = new Date();
+  document.getElementById('startTime').value = '';
+  document.getElementById('endTime').value = '';
+  setSplitField('');
+  updateDurationChip();
+  clearDraft();
+  renderExerciseBlocks();
+});
+
 document.getElementById('saveWorkoutBtn').addEventListener('click', ()=>{
   const split = getCurrentSplitName().trim();
   const date = document.getElementById('logDate').value;
@@ -819,10 +888,17 @@ document.getElementById('saveWorkoutBtn').addEventListener('click', ()=>{
   }
   const startTime = document.getElementById('startTime').value;
   const endTime = document.getElementById('endTime').value;
-  const entry = { id: cryptoId(), date, split, exercises: cleaned };
+  const existingIdx = editingWorkoutId ? workouts.findIndex(w=>w.id===editingWorkoutId) : -1;
+  const entry = { id: existingIdx >= 0 ? editingWorkoutId : cryptoId(), date, split, exercises: cleaned };
   if(startTime) entry.startTime = startTime;
   if(endTime) entry.endTime = endTime;
-  workouts.unshift(entry);
+  if(existingIdx >= 0){
+    workouts[existingIdx] = entry; // edited in place, same id
+    document.getElementById('logDate').valueAsDate = new Date();
+    setSplitField('');
+  } else {
+    workouts.unshift(entry);
+  }
   saveWorkouts();
   draftExercises = [];
   document.getElementById('startTime').value = '';
@@ -953,12 +1029,19 @@ function renderHistory(){
         </div>
         ${formatTimeSummary(w) ? `<div class="time-text">${formatTimeSummary(w)}</div>` : ''}
         ${rows}
-        <button class="btn danger" data-del="${w.id}" style="margin-top:12px; padding:9px;">Delete workout</button>
+        <div class="card-actions">
+          <button class="btn secondary" data-edit-w="${w.id}" style="padding:9px;">Edit</button>
+          <button class="btn danger" data-del="${w.id}" style="padding:9px;">Delete</button>
+        </div>
       </div>`;
   }).join('');
+  list.querySelectorAll('button[data-edit-w]').forEach(b=>{
+    b.addEventListener('click', ()=> startEditWorkout(b.dataset.editW));
+  });
   list.querySelectorAll('button[data-del]').forEach(b=>{
     b.addEventListener('click', ()=>{
       if(confirm('Delete this workout?')){
+        if(editingWorkoutId === b.dataset.del){ draftExercises = []; clearDraft(); renderExerciseBlocks(); }
         workouts = workouts.filter(w=>w.id!==b.dataset.del);
         saveWorkouts();
         renderHistory();
