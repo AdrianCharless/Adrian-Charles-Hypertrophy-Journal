@@ -162,6 +162,19 @@
   .cal-dot-spacer{width:5px; height:5px;}
   .cal-day-detail{margin-top:12px;}
 
+  /* ---- Workout time (start / end) ---- */
+  .time-row{display:flex; gap:10px; margin-top:2px;}
+  .time-col .time-input-wrap{display:flex; gap:6px;}
+  .time-col input[type="time"]{flex:1; min-width:0;}
+  .now-btn{
+    background:var(--surface2); border:1px solid var(--line); color:var(--muted);
+    font-family:inherit; letter-spacing:.02em;
+  }
+    margin-top:10px; font-size:12.5px; font-weight:700; color:var(--accent);
+    background:var(--accent-dim); border-radius:9px; padding:7px 11px; display:none;
+  }
+  .time-text{font-size:12px; color:var(--muted); font-weight:600; margin:-2px 0 8px;}
+
   /* ---- Draft original-date note ---- */
   .draft-note{
     background:var(--accent-dim); color:var(--accent); font-size:12.5px; font-weight:700;
@@ -231,6 +244,23 @@
       <div id="splitHistory"></div>
       <label class="field">Date</label>
       <input id="logDate" type="date">
+      <div class="time-row">
+        <div class="time-col">
+          <label class="field">Start time</label>
+          <div class="time-input-wrap">
+            <input id="startTime" type="time">
+            <button type="button" class="now-btn" id="startNowBtn">Now</button>
+          </div>
+        </div>
+        <div class="time-col">
+          <label class="field">End time</label>
+          <div class="time-input-wrap">
+            <input id="endTime" type="time">
+            <button type="button" class="now-btn" id="endNowBtn">Now</button>
+          </div>
+        </div>
+      </div>
+      <div class="duration-chip" id="durationChip"></div>
     </div>
 
     <div id="exerciseBlocks"></div>
@@ -299,6 +329,7 @@
     <button type="button" class="unit-toggle" id="timedToggle">Timed</button>
   </div>
   <button class="btn secondary" id="sheetAddSetBtn" style="margin-top:12px; padding:11px;">Add set</button>
+  <div id="sheetWarn" style="display:none; margin-top:8px; font-size:13px; font-weight:600; color:#D93A3A;"></div>
   <div class="set-list" id="sheetSetList"></div>
   <button class="btn" id="sheetDoneBtn" style="margin-top:6px;">Done</button>
 </div>
@@ -397,7 +428,9 @@ function saveDraft(){
     date: document.getElementById('logDate').value,
     split: getCurrentSplitName(),
     exercises: draftExercises,
-    originalDate: draftOriginalDate
+    originalDate: draftOriginalDate,
+    startTime: document.getElementById('startTime').value,
+    endTime: document.getElementById('endTime').value
   };
   try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); }catch(e){ /* storage unavailable, draft just won't persist */ }
   renderDraftNote();
@@ -417,6 +450,10 @@ function loadDraft(){
     draftExercises = draft.exercises;
     draftOriginalDate = draft.originalDate || draft.date || null;
   }
+  // Start/end times belong to the unfinished workout itself, so unlike the date they do restore.
+  if(draft.startTime) document.getElementById('startTime').value = draft.startTime;
+  if(draft.endTime) document.getElementById('endTime').value = draft.endTime;
+  updateDurationChip();
   // Intentionally NOT restoring draft.date here: the date field should always default to
   // today on load (already set above), not silently jump back to whenever an unfinished
   // draft was originally started. If you're finishing an old draft on a later day, set the
@@ -454,6 +491,67 @@ function renderDraftNote(){
 }
 
 document.getElementById('logDate').addEventListener('change', saveDraft);
+
+/* ---- Workout start/end time ---- */
+function nowHHMM(){
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+/* Minutes between two HH:MM strings. If end is earlier than start, assume the
+   workout ran past midnight and roll the end to the next day. */
+function minutesBetween(start, end){
+  if(!start || !end) return null;
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  let diff = (eh*60 + em) - (sh*60 + sm);
+  if(diff < 0) diff += 24*60;
+  return diff;
+}
+function formatDuration(mins){
+  if(mins === null || mins === undefined) return '';
+  const h = Math.floor(mins/60), m = mins % 60;
+  if(h === 0) return `${m}m`;
+  if(m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
+function formatClock(hhmm){
+  if(!hhmm) return '';
+  const [h, m] = hhmm.split(':').map(Number);
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const h12 = ((h + 11) % 12) + 1;
+  return `${h12}:${String(m).padStart(2,'0')} ${suffix}`;
+}
+/* "6:30 PM – 7:45 PM · 1h 15m", or just the start/end if only one was logged. */
+function formatTimeSummary(w){
+  if(w.startTime && w.endTime){
+    return `${formatClock(w.startTime)} – ${formatClock(w.endTime)} · ${formatDuration(minutesBetween(w.startTime, w.endTime))}`;
+  }
+  if(w.startTime) return `Started ${formatClock(w.startTime)}`;
+  if(w.endTime) return `Ended ${formatClock(w.endTime)}`;
+  return '';
+}
+function updateDurationChip(){
+  const chip = document.getElementById('durationChip');
+  const mins = minutesBetween(document.getElementById('startTime').value, document.getElementById('endTime').value);
+  if(mins === null){
+    chip.style.display = 'none';
+    chip.textContent = '';
+  } else {
+    chip.textContent = `Workout length: ${formatDuration(mins)}`;
+    chip.style.display = 'block';
+  }
+}
+['startTime','endTime'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', ()=>{ updateDurationChip(); saveDraft(); });
+});
+document.getElementById('startNowBtn').addEventListener('click', ()=>{
+  document.getElementById('startTime').value = nowHHMM();
+  updateDurationChip(); saveDraft();
+});
+document.getElementById('endNowBtn').addEventListener('click', ()=>{
+  document.getElementById('endTime').value = nowHHMM();
+  updateDurationChip(); saveDraft();
+});
 
 function renderExerciseBlocks(){
   const wrap = document.getElementById('exerciseBlocks');
@@ -526,6 +624,7 @@ function openSheet(index){
   const lastSet = ex.sets.length ? ex.sets[ex.sets.length-1] : null;
   setBwToggle(!!(lastSet && lastSet.bw));
   setTimedToggle(!!(lastSet && lastSet.unit === 'sec'));
+  showSheetWarn('');
   renderSheetSets();
   renderSheetHistory();
   sheet.classList.add('active');
@@ -541,8 +640,20 @@ function closeSheet(){
   editingIndex = null;
   renderExerciseBlocks();
 }
-sheetBackdrop.addEventListener('click', closeSheet);
-document.getElementById('sheetDoneBtn').addEventListener('click', closeSheet);
+/* Closing never discards a typed set: it is saved first. If the fields are
+   only half filled, the sheet stays open and says what is missing. */
+function tryCloseSheet(){
+  const res = commitPendingSet();
+  if(res === 'invalid'){
+    const timed = sheetIsTimed;
+    showSheetWarn('Finish this set first: enter the ' + (timed ? 'seconds' : 'reps') + ', or clear the fields.');
+    return;
+  }
+  showSheetWarn('');
+  closeSheet();
+}
+sheetBackdrop.addEventListener('click', tryCloseSheet);
+document.getElementById('sheetDoneBtn').addEventListener('click', tryCloseSheet);
 
 const NEW_VALUE = '__new__';
 
@@ -660,15 +771,31 @@ function renderSheetSets(){
   saveDraft();
 }
 
-document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
+/* Adds whatever is typed in the set fields to the current exercise.
+   Returns 'empty' if nothing was typed, 'added' if a set was saved,
+   or 'invalid' if the fields are partly filled and can't form a set. */
+function commitPendingSet(){
   const weightRaw = document.getElementById('sheetWeight').value.trim();
+  const repsRaw = document.getElementById('sheetReps').value.trim();
+  const weightTyped = !sheetIsBodyweight && weightRaw !== '';
+  if(!weightTyped && repsRaw === '') return 'empty';
   const w = sheetIsBodyweight ? null : (weightRaw === '' ? null : parseFloat(weightRaw));
-  const r = parseInt(document.getElementById('sheetReps').value);
-  if((!sheetIsBodyweight && weightRaw !== '' && isNaN(w)) || isNaN(r)) return;
+  const r = parseInt(repsRaw);
+  if((weightTyped && isNaN(w)) || isNaN(r)) return 'invalid';
   draftExercises[editingIndex].sets.push({ w, bw: sheetIsBodyweight, r, unit: sheetIsTimed ? 'sec' : 'reps' });
   document.getElementById('sheetReps').value = '';
-  document.getElementById('sheetReps').focus();
   renderSheetSets();
+  return 'added';
+}
+function showSheetWarn(msg){
+  const el = document.getElementById('sheetWarn');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
+  showSheetWarn('');
+  const res = commitPendingSet();
+  if(res === 'added') document.getElementById('sheetReps').focus();
 });
 
 document.getElementById('saveWorkoutBtn').addEventListener('click', ()=>{
@@ -679,9 +806,17 @@ document.getElementById('saveWorkoutBtn').addEventListener('click', ()=>{
     alert('Select or name a split, pick a date, and add at least one exercise with sets.');
     return;
   }
-  workouts.unshift({ id: cryptoId(), date, split, exercises: cleaned });
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  const entry = { id: cryptoId(), date, split, exercises: cleaned };
+  if(startTime) entry.startTime = startTime;
+  if(endTime) entry.endTime = endTime;
+  workouts.unshift(entry);
   saveWorkouts();
   draftExercises = [];
+  document.getElementById('startTime').value = '';
+  document.getElementById('endTime').value = '';
+  updateDurationChip();
   clearDraft();
   populateSplitSelect();
   renderExerciseBlocks();
@@ -805,6 +940,7 @@ function renderHistory(){
           <div class="date">${formatDate(w.date)}</div>
           <span class="pill">${escapeHtml(w.split)}</span>
         </div>
+        ${formatTimeSummary(w) ? `<div class="time-text">${formatTimeSummary(w)}</div>` : ''}
         ${rows}
         <button class="btn danger" data-del="${w.id}" style="margin-top:12px; padding:9px;">Delete workout</button>
       </div>`;
@@ -1045,7 +1181,7 @@ function renderCalDayDetail(){
       const setsText = ex.sets.map(s=>formatSetHtml(s)).join(', ');
       return `<div class="ex-row"><div class="ex-name">${escapeHtml(ex.name)}</div><div class="sets">${setsText}</div></div>`;
     }).join('');
-    return `<div class="card cal-day-detail"><div class="day-head"><div class="date">${label}</div><span class="pill">${escapeHtml(w.split)}</span></div>${rows}</div>`;
+    return `<div class="card cal-day-detail"><div class="day-head"><div class="date">${label}</div><span class="pill">${escapeHtml(w.split)}</span></div>${formatTimeSummary(w) ? `<div class="time-text">${formatTimeSummary(w)}</div>` : ''}${rows}</div>`;
   }).join('');
   panel.innerHTML = body;
 }
