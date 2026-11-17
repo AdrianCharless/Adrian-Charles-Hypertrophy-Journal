@@ -90,6 +90,14 @@
     border-radius:9px; padding:11px 12px; font-size:16px; font-family:inherit; width:100%;
   }
   input::placeholder{color:var(--muted);}
+  /* iOS Safari gives date/time inputs an intrinsic width that ignores width:100%
+     and spills out of the card. Reset it so they stay inside their container. */
+  input[type="date"], input[type="time"]{
+    -webkit-appearance:none; appearance:none;
+    display:block; box-sizing:border-box; min-width:0; max-width:100%;
+    min-height:46px; text-align:left;
+  }
+  input[type="date"]::-webkit-date-and-time-value, input[type="time"]::-webkit-date-and-time-value{text-align:left;}
   .row{display:flex; gap:8px;}
   .row > *{flex:1;}
   label.field{display:block; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; margin:12px 0 5px;}
@@ -163,7 +171,7 @@
   .cal-day-detail{margin-top:12px;}
 
   /* ---- Workout time (start / end) ---- */
-  .time-row{display:flex; gap:10px; margin-top:2px;}
+  .time-row{display:flex; gap:10px; margin-top:4px;}
   .time-col{flex:1; min-width:0;}
   .time-col .time-input-wrap{display:flex; gap:6px;}
   .time-col input[type="time"]{flex:1; min-width:0;}
