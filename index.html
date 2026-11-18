@@ -831,6 +831,8 @@ function commitPendingSet(){
   const r = parseInt(repsRaw);
   if((weightTyped && isNaN(w)) || isNaN(r)) return 'invalid';
   draftExercises[editingIndex].sets.push({ w, bw: sheetIsBodyweight, r, unit: sheetIsTimed ? 'sec' : 'reps' });
+  // Clear both fields so a finished set can't be mistaken for a pending one when tapping Done.
+  document.getElementById('sheetWeight').value = '';
   document.getElementById('sheetReps').value = '';
   renderSheetSets();
   return 'added';
@@ -843,7 +845,7 @@ function showSheetWarn(msg){
 document.getElementById('sheetAddSetBtn').addEventListener('click', ()=>{
   showSheetWarn('');
   const res = commitPendingSet();
-  if(res === 'added') document.getElementById('sheetReps').focus();
+  if(res === 'added') document.getElementById(sheetIsBodyweight ? 'sheetReps' : 'sheetWeight').focus();
 });
 
 /* ---- Edit a saved workout (reuses the Log tab) ---- */
